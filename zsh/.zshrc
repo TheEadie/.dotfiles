@@ -16,10 +16,7 @@ source $ZSH/oh-my-zsh.sh
 
 # Aliases
 alias k="kubectl"
-
-if [ -x "$(command -v exa)" ]; then
-  alias ls="exa"
-fi
+[ -x "$(command -v exa)" ] && alias ls="exa"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+[ ! -f ~/.p10k.zsh ] || source ~/.p10k.zsh
