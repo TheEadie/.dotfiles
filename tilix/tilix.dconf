@@ -1,0 +1,19 @@
+[/]
+theme-variant='dark'
+warn-vte-config-issue=false
+
+[profiles/2b7c4080-0ddd-46c5-8f23-563fd3ba789d]
+foreground-color='#839496'
+visible-name='Default'
+login-shell=true
+palette=['#073642', '#DC322F', '#859900', '#B58900', '#268BD2', '#D33682', '#2AA198', '#EEE8D5', '#54838F', '#CB4B16', '#D1E64D', '#FFD64D', '#72D8FF', '#6C71C4', '#77EEE5', '#FDF6E3']
+badge-color-set=false
+use-system-font=false
+cursor-colors-set=false
+highlight-colors-set=false
+use-theme-colors=false
+use-custom-command=false
+bold-color-set=false
+font='MesloLGS NF 10'
+terminal-bell='none'
+background-color='#002B36'
