@@ -1,0 +1,17 @@
+[user]
+	name = David Eadie
+	email = david@eadie.net
+[core]
+	autocrlf = input
+	editor = nano
+[alias]
+	dwm = difftool -y master HEAD
+	cleanup = "!git checkout master | git branch --merged | %{$_.trim()} | ?{$_ -notmatch 'develop' -and $_ -notmatch 'master'} | %{git branch -d $_}"
+	cleanup2 = "!git checkout master && git branch --merged master | grep -v "\\* master" | xargs -n 1 git branch -d"
+	mim = "!git merge origin/master"
+	new = "!git checkout master && git pull && git checkout -b $1 && :"
+	del = "!git checkout master && git branch -d $1 && :"
+	ls = "!git branch"
+	co = checkout
+	ca = "!git add -A && git commit -a"
+	undo = "!git checkout -- ."
