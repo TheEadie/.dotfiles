@@ -68,4 +68,13 @@ wine <installer name>.exe
 mv '~/.wine/drive_c/GOG Games/Worms Armaggedon' '~/Worms/'
 cd ~/Worms
 wine runas /trustlevel:0x20000 wa.exe
+
+```
+### Fix Alt-Tab in full screen apps
+
+```
+mkdir -p ~/.config/systemd/user/sommelier-x@0.service.d
+echo -e '[Service]\nEnvironment="SOMMELIER_ACCELERATORS=Super_L,<Alt>tab"' > ~/.config/systemd/user/sommelier-x@0.service.d/override.conf
+systemctl --user daemon-reload
+systemctl --user restart sommelier-x@0.service
 ```
