@@ -14,6 +14,9 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
+# Add things to PATH
+path+=("$HOME/.dotnet/tools")
+
 # Aliases
 alias k="kubectl"
 [ -x "$(command -v exa)" ] && alias ls="exa"
