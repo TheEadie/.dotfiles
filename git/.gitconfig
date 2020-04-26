@@ -1,17 +1,20 @@
 [user]
-	name = David Eadie
-	email = david@eadie.net
+	name		= David Eadie
+	email		= david@eadie.net
 [core]
-	autocrlf = input
-	editor = nano
+	autocrlf	= input
+	editor		= nano
 [alias]
-	dwm = difftool -y master HEAD
-	cleanup = "!git checkout master | git branch --merged | %{$_.trim()} | ?{$_ -notmatch 'develop' -and $_ -notmatch 'master'} | %{git branch -d $_}"
-	cleanup2 = "!git checkout master && git branch --merged master | grep -v "\\* master" | xargs -n 1 git branch -d"
-	mim = "!git merge origin/master"
-	new = "!git checkout master && git pull && git checkout -b $1 && :"
-	del = "!git checkout master && git branch -d $1 && :"
-	ls = "!git branch"
-	co = checkout
-	ca = "!git add -A && git commit -a"
-	undo = "!git checkout -- ."
+	co		= checkout
+	ls		= branch
+	shove		= push --force-with-lease
+
+	ca		= "!git add -A && git commit -a"
+	oops		= "!git add -A && git commit --amend"
+	new		= "!git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && :"
+	rom		= "!git fetch && git rebase origin/master"
+	mim		= "!git fetch && git merge origin/master"
+
+	graph		= log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+	cleanup		= "!git checkout master && git remote prune origin && git prune-branches" 
+	prune-branches	= !sh -c 'git branch --merged | grep -v "^*" | xargs git branch -d'
