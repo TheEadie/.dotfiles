@@ -1,3 +1,11 @@
+# Check for updates
+echo "Checking for updates:"
+apt list --upgradable -a
+
+git fetch >/dev/null 2>&1
+dotfiles_behind=$(git -C ~/.dotfiles/ rev-list origin/master..master --count)
+[ $dotfiles_behind -gt 0 ] && echo "Dotfiles: $dotfiles_behind updates availible"
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
