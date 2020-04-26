@@ -11,13 +11,16 @@ export LS_COLORS="rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;
 # Start oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git)
+
+# Plugins
+plugins=(git kubectl docker helm zsh-autosuggestions)
 source $ZSH/oh-my-zsh.sh
 
 # Add things to PATH
 path+=("$HOME/.dotnet/tools")
 
 # Aliases
+alias cls="clear"
 alias k="kubectl"
 [ -x "$(command -v exa)" ] && alias ls="exa"
 
