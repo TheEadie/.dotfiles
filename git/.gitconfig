@@ -1,20 +1,24 @@
 [user]
 	name		= David Eadie
 	email		= david@eadie.net
-[core]
-	autocrlf	= input
-	editor		= nano
 [alias]
 	co		= checkout
 	ls		= branch
-	shove		= push --force-with-lease
+	shove	= push --force-with-lease
 
 	ca		= "!git add -A && git commit -a"
-	oops		= "!git add -A && git commit --amend"
+	oops	= "!git add -A && git commit --amend"
 	new		= "!git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && :"
 	rom		= "!git fetch && git rebase origin/master"
 	mim		= "!git fetch && git merge origin/master"
 
-	graph		= log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
-	cleanup		= "!git checkout master && git remote prune origin && git prune-branches" 
-	prune-branches	= !sh -c 'git branch --merged | grep -v "^*" | xargs git branch -d'
+	graph			= log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+
+[includeIf "gitdir/i:c:/"]
+    path = ~/.gitconfig.windows
+[includeIf "gitdir/i:d:/"]
+    path = ~/.gitconfig.windows
+[includeIf "gitdir/i:/users/"]
+    path = ~/.gitconfig.unix
+[includeIf "gitdir/i:/home/"]
+    path = ~/.gitconfig.unix
