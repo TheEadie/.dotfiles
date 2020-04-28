@@ -4,8 +4,9 @@ apt list --upgradable -a
 
 pushd 1>/dev/null
 
-git -C ~/.dotfiles/ fetch >/dev/null 2>&1
-dotfiles_behind=$(git -C ~/.dotfiles/ rev-list origin/master..master --count)
+cd ~/.dotfiles
+git fetch >/dev/null 2>&1
+dotfiles_behind=$(git rev-list master..origin/master --count)
 [ $dotfiles_behind -gt 0 ] && echo "Dotfiles: $dotfiles_behind updates availible"
 
 popd 1>/dev/null
