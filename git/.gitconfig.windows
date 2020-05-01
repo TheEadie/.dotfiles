@@ -1,3 +1,6 @@
 [core]
-	autocrlf	= auto
-	editor		= code
+	autocrlf	= true
+	editor		= code --wait
+
+[alias]
+	test		= "!git fetch"
