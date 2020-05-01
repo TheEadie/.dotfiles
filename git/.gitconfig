@@ -22,3 +22,5 @@
     path = ~/.gitconfig.unix
 [includeIf "gitdir/i:/home/"]
     path = ~/.gitconfig.unix
+[url "https://"]
+	insteadOf = git://
