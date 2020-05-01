@@ -8,7 +8,7 @@
 
 	ca		= "!git add -A && git commit -a"
 	oops	= "!git add -A && git commit --amend"
-	new		= "!git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && :"
+	new		= "!git add -A && git stash && git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && git stash pop && :"
 	rom		= "!git fetch && git rebase origin/master"
 	mim		= "!git fetch && git merge origin/master"
 
@@ -22,5 +22,6 @@
     path = ~/.gitconfig.unix
 [includeIf "gitdir/i:/home/"]
     path = ~/.gitconfig.unix
+
 [url "https://"]
 	insteadOf = git://
