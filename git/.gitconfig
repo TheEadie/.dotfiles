@@ -4,15 +4,18 @@
 [alias]
 	co		= checkout
 	ls		= branch
-	shove	= push --force-with-lease
+	shove		= push --force-with-lease
 
 	ca		= "!git add -A && git commit -a"
-	oops	= "!git add -A && git commit --amend"
+	oops		= "!git add -A && git commit --amend"
 	new		= "!git add -A && git stash && git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && git stash pop && :"
 	rom		= "!git fetch && git rebase origin/master"
 	mim		= "!git fetch && git merge origin/master"
 
-	graph			= log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+	graph		= log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+
+[fetch]
+	prune = true
 
 [includeIf "gitdir/i:c:/"]
     path = ~/.gitconfig.windows
