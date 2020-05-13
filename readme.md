@@ -1,7 +1,19 @@
-### Dotfiles
+## Dotfiles
+Repo contianing my personal dotfiles
 
-Repo contianing dotfile for linux and WSL on Windows
+### Linux - ZSH
+Run `./install.sh`.
+Installs ZSH and setups up sym-links on linux when the repo is checked out to your home directory (e.g. `~/.dotfiles`)
 
- - `./install.sh` setups up sym-links on linux when the repo is checked out to your home directory (e.g. `~/.dotfiles`)
- - `tilix` contains setup for fonts and colour schems for the tilix terminal
+### Windows - PowerShell
+Run `./install.ps1`.
+Sets up sym-links on windows to this check out of the repo (e.g. `D:\code\.dotfiles`)
+
+### Terminal Setup
+Instructions for better colours and fonts
+ - `tilix`
+ - `windows-terminal`
+
+### Machine specific setup
+Personal notes on how to set up particular machines
  - `chromebook` contains instructions on how to setup linux on crostini
