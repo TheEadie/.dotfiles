@@ -15,4 +15,4 @@ New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory ".gitconfig") -T
 New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory ".gitconfig.windows") -Target (Join-Path $CurrentDirectory "git/.gitconfig.windows")
 
 # Windows Terminal
-New-Item -ItemType SymbolicLink -Path (Join-Path $WindowsTerminalConfigDirectory "settings.json") -Target (Join-Path $CurrentDirectory "windows-terminal/settings.json")
+New-Item -ItemType SymbolicLink -Path (Join-Path $WindowsTerminalConfigDirectory "settings.json") -Target (Join-Path $CurrentDirectory "terminals/windows-terminal/settings.json")

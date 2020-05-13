@@ -30,7 +30,7 @@ git clone git@github.com:TheEadie/.dotfiles.git
 cd ~/.dotfiles
 ./install.sh
 
-cd ~/.dotfiles/tilix
+cd ~/.dotfiles/terminals/tilix
 ./setup.sh
 ```
 
