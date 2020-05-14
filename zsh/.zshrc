@@ -35,6 +35,7 @@ path+=("$HOME/.dotnet/tools")
 # Aliases
 alias cls="clear"
 alias k="kubectl"
+alias dps="docker ps --format='table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'"
 [ -x "$(command -v exa)" ] && alias ls="exa"
 
 # Load P10k config
