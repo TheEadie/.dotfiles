@@ -17,7 +17,11 @@
 
 [includeIf "gitdir/i:c:/"]
     path = ~/.gitconfig.windows
+[includeIf "gitdir/i:/mnt/c/"]
+    path = ~/.gitconfig.windows
 [includeIf "gitdir/i:d:/"]
+    path = ~/.gitconfig.windows
+[includeIf "gitdir/i:/mnt/d/"]
     path = ~/.gitconfig.windows
 [includeIf "gitdir/i:/users/"]
     path = ~/.gitconfig.unix
