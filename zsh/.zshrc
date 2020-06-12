@@ -38,6 +38,7 @@ alias k="kubectl"
 alias d="docker"
 alias dps="docker ps --format='table {{.Names}}\t{{.Image}}\t{{.Status}}'"
 [ -x "$(command -v exa)" ] && alias ls="exa"
+[ -x "$(command -v exa)" ] && alias la="exa -a"
 
 # Load P10k config
 [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
