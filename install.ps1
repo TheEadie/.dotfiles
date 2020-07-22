@@ -16,3 +16,8 @@ New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory ".gitconfig.wind
 
 # Windows Terminal
 New-Item -ItemType SymbolicLink -Path (Join-Path $WindowsTerminalConfigDirectory "settings.json") -Target (Join-Path $CurrentDirectory "terminals/windows-terminal/settings.json")
+
+# PowerShell Profile
+New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory "Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1") -Target (Join-Path $CurrentDirectory "powershell/Microsoft.PowerShell_profile.ps1")
+
+Read-Host
