@@ -37,6 +37,7 @@ alias cls="clear"
 alias k="kubectl"
 alias d="docker"
 alias dps="docker ps --format='table {{.Names}}\t{{.Image}}\t{{.Status}}'"
+alias ghpr="gh pr view --web"
 [ -x "$(command -v exa)" ] && alias ls="exa"
 [ -x "$(command -v exa)" ] && alias la="exa -a"
 
