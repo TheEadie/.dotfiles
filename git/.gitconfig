@@ -9,7 +9,7 @@
 	ca			= "!git add -A && git commit -a"
 	oops		= "!git add -A && git commit --amend"
 
-	new			= "!git add -A && git stash && git checkout main && git fetch && git reset --hard origin/master && git checkout -b $1 && git stash pop && :"
+	new			= "!git add -A && git stash && git checkout main && git fetch && git reset --hard origin/main && git checkout -b $1 && git stash pop && :"
 	rom			= "!git fetch && git rebase origin/main"
 	mim			= "!git fetch && git merge origin/main"
 	new-master	= "!git add -A && git stash && git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && git stash pop && :"
@@ -34,3 +34,5 @@
 
 [url "https://"]
 	insteadOf = git://
+[core]
+	editor = \"C:\\Users\\work\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --wait
