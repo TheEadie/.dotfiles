@@ -34,7 +34,8 @@ path+=("$HOME/.dotnet/tools")
 
 # Aliases
 alias cls="clear"
-alias watch='watch '
+alias watch="watch "
+alias pls="sudo !!"
 alias k="kubectl"
 alias d="docker"
 alias dps="docker ps --format='table {{.Names}}\t{{.Image}}\t{{.Status}}'"
