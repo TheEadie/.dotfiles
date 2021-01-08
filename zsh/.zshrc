@@ -1,3 +1,4 @@
+
 # Check for updates
 echo "Checking for updates:"
 apt list --upgradable -a
@@ -31,6 +32,10 @@ source $ZSH/oh-my-zsh.sh
 
 # Add things to PATH
 path+=("$HOME/.dotnet/tools")
+path+=("$HOME/.spawnctl/bin")
+
+# Completions
+autoload -U compinit; compinit
 
 # Aliases
 alias cls="clear"
@@ -38,6 +43,7 @@ alias watch="watch "
 alias pls="sudo !!"
 alias k="kubectl"
 alias d="docker"
+alias s="spawnctl"
 alias dps="docker ps --format='table {{.Names}}\t{{.Image}}\t{{.Status}}'"
 alias ghpr="gh pr view --web"
 [ -x "$(command -v exa)" ] && alias ls="exa"
