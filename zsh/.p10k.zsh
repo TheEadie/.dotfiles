@@ -33,6 +33,8 @@
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     # =========================[ Line #1 ]=========================
     os_icon                 # os identifier
+    my_apt_updates		      # apt updates availible
+    my_dotfiles_updates     # dotfiles updates availible
     context                 # user@hostname
     dir                     # current directory
     vcs                     # git status
@@ -1521,14 +1523,13 @@
   # greeting the user.
   #
   # Type `p10k help segment` for documentation and a more sophisticated example.
-  function prompt_example() {
-    p10k segment -b 1 -f 3 -i '⭐' -t 'hello, %n'
+  function prompt_my_example() {
+    p10k segment -b 1 -f 3 -i '⭐' -t 'Updates Availible'
   }
 
   # User-defined prompt segments may optionally provide an instant_prompt_* function. Its job
   # is to generate the prompt segment for display in instant prompt. See
   # https://github.com/romkatv/powerlevel10k/blob/master/README.md#instant-prompt.
-  #
   # Powerlevel10k will call instant_prompt_* at the same time as the regular prompt_* function
   # and will record all `p10k segment` calls it makes. When displaying instant prompt, Powerlevel10k
   # will replay these calls without actually calling instant_prompt_*. It is imperative that
@@ -1541,8 +1542,76 @@
     # Since prompt_example always makes the same `p10k segment` calls, we can call it from
     # instant_prompt_example. This will give us the same `example` prompt segment in the instant
     # and regular prompts.
-    prompt_example
+    prompt_my_example
   }
+
+  typeset -gi _apt_updates_scheduled=0
+  typeset -g _apt_updates_content=-1
+  typeset -gi _dotfiles_updates_scheduled=0
+  typeset -g _dotfiles_updates_content=-1
+
+  p10k-on-pre-prompt() {
+    if [[ $P9K_PROMPT == regular && $_apt_updates_scheduled == 0 ]]; then
+      _apt_updates_scheduled=1
+      zsh-defer -a _apt_updates_compute
+    fi
+    if [[ $P9K_PROMPT == regular && $_dotfiles_updates_scheduled == 0 ]]; then
+      _dotfiles_updates_scheduled=1
+      zsh-defer -a _dotfiles_updates_compute
+    fi
+  }
+
+  _apt_updates_compute() {
+    local content=0
+    content="${$((apt list --upgradable -a | wc -l) 2>/dev/null)//\%/%%}" || content=
+    if [[ $content != $_apt_updates_content ]]; then
+      _apt_updates_content=$content
+      zle .reset-prompt
+      zle -R
+    fi
+    # Don't reset _apt_updates_scheduled so that this check only runs once per session
+  }
+
+  function prompt_my_apt_updates() {
+    if [ $_apt_updates_content -gt 1 ]; then
+      p10k segment -b 'red' -f 'white' -i ''
+    fi
+  }
+
+  function instant_prompt_my_apt_updates() {
+    prompt_my_apt_updates
+  }
+
+  _dotfiles_updates() {
+    pushd 1>/dev/null
+    cd ~/.dotfiles
+    git fetch >/dev/null 2>&1
+    dotfiles_behind=$(git rev-list master..origin/master --count)
+    echo $dotfiles_behind
+    popd 1>/dev/null
+  }
+
+  _dotfiles_updates_compute() {
+    local content
+    content="${$((_dotfiles_updates) 2>/dev/null)//\%/%%}" || content=
+    if [[ $content != $_dotfiles_updates_content ]]; then
+      _dotfiles_updates_content=$content
+      zle .reset-prompt
+      zle -R
+    fi
+    # Don't reset _apt_updates_scheduled so that this check only runs once per session
+  }
+
+  function prompt_my_dotfiles_updates() {
+    if [ $_dotfiles_updates_content -gt 0 ]; then
+      p10k segment -b 'yellow' -f 'white' -i ''
+    fi
+  }
+
+  function instant_prompt_my_dotfiles_updates() {
+    prompt_my_dotfiles_updates
+  }
+  
 
   # User-defined prompt segments can be customized the same way as built-in segments.
   # typeset -g POWERLEVEL9K_EXAMPLE_FOREGROUND=3
