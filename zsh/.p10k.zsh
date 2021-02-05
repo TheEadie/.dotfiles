@@ -1604,7 +1604,7 @@
 
   function prompt_my_dotfiles_updates() {
     if [ $_dotfiles_updates_content -gt 0 ]; then
-      p10k segment -b 'yellow' -f 'white' -i ''
+      p10k segment -b 'yellow' -f 'white' -i ''
     fi
   }
 
