@@ -25,6 +25,10 @@ path+=("$HOME/.spawnctl/bin")
 autoload -U compinit; compinit
 [ -x "$(command -v spawnctl)" ] && spawnctl completion zsh > "${fpath[1]}/_spawnctl"
 
+# Functions
+fpath=( ~/.dotfiles/zsh/functions "${fpath[@]}" )
+autoload -Uz spawn-ide
+
 # Aliases
 alias cls="clear"
 alias watch="watch "
@@ -32,6 +36,7 @@ alias pls="sudo !!"
 alias k="kubectl"
 alias d="docker"
 alias s="spawnctl"
+alias side="spawn-ide"
 alias dps="docker ps --format='table {{.Names}}\t{{.Image}}\t{{.Status}}'"
 alias ghpr="gh pr view --web"
 [ -x "$(command -v exa)" ] && alias ls="exa"

@@ -1,0 +1,92 @@
+#!/bin/bash
+
+## Config
+SSMSLocation="/mnt/d/Work/SQL Server/SSMS 18/Common7/IDE/Ssms.exe"
+
+## Input
+ImageName=$1
+ContainerName=${2:-$1}
+
+## Functions
+function logSpawnMessage() {
+    GREEN='\033[0;32m'
+    NC='\033[0m'
+    printf "🛸  ${GREEN}$1${NC}\n"
+}
+
+function ImageExists() {
+    if ! spawnctl get data-image $1 &> /dev/null ; then
+        return 1
+    fi
+    return 0
+}
+
+function ContainerExists() {
+    if ! spawnctl get data-container "$1" &> /dev/null ; then
+        return 1
+    fi
+    return 0
+}
+
+function IsWSL2() {
+    if grep -qEi "(Microsoft|WSL)" /proc/version &> /dev/null ; then
+        return 0
+    fi
+    return 1
+}
+
+function RunIDE() {
+    containerJson=$(spawnctl get data-container $1 -o json)
+    
+    engine=$(echo $containerJson | jq -r .engine)
+    port=$(echo $containerJson | jq -r .port)
+    host=$(echo $containerJson | jq -r .host)
+    user=$(echo $containerJson | jq -r .user)
+    password=$(echo $containerJson | jq -r .password)
+
+    IsWSL2
+    IsWSL2=$?
+
+    case "$engine" in
+
+        MSSQL)
+            if [[ "$IsWSL2" == 0 ]]; then
+                logSpawnMessage "Starting SSMS..."
+                "$SSMSLocation" -S "$host,$port" -U "$user" -nosplash &> /dev/null &!
+                echo "$password" | clip.exe
+                logSpawnMessage "Database password has been copied to the clipboard"
+            else
+                logSpawnMessage "Starting Azure Data Studio..."
+                azuredatastudio -S "$host,$port" -U "$user" &
+                logSpawnMessage "Database password is $password"
+            fi
+            ;;
+
+        *)
+            logSpawnMessage "IDE for $engine not yet implemented"
+            ;;
+    esac
+}
+
+## Check Image
+ImageExists $ImageName
+ImageExists=$?
+
+if [[ "$ImageExists" == 1 ]]; then
+    logSpawnMessage "Could not find spawn image ($ImageName)"
+    return
+fi
+
+## Check Container
+ContainerExists $ContainerName
+ContainerExists=$?
+
+if [[ "$ContainerExists" == 0 ]]; then
+    logSpawnMessage "Container found ($ContainerName) - Reusing existing Spawn containers"
+else
+    logSpawnMessage "Container not found ($ContainerName) - Creating..."
+    spawnctl create data-container --image $1 --name "$2"
+fi
+
+## Start IDE
+RunIDE $ContainerName
