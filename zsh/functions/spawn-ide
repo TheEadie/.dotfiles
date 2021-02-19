@@ -57,7 +57,7 @@ function RunIDE() {
                 logSpawnMessage "Database password has been copied to the clipboard"
             else
                 logSpawnMessage "Starting Azure Data Studio..."
-                azuredatastudio -S "$host,$port" -U "$user" &
+                azuredatastudio -S "$host,$port" -U "$user" &!
                 logSpawnMessage "Database password is $password"
             fi
             ;;
