@@ -85,7 +85,7 @@ if [[ "$ContainerExists" == 0 ]]; then
     logSpawnMessage "Container found ($ContainerName) - Reusing existing Spawn containers"
 else
     logSpawnMessage "Container not found ($ContainerName) - Creating..."
-    spawnctl create data-container --image $1 --name "$2"
+    spawnctl create data-container --image "$ImageName" --name "$ContainerName"
 fi
 
 ## Start IDE
