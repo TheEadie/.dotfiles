@@ -25,6 +25,7 @@ path+=("/opt/schemacrawler/bin")
 # Completions
 autoload -U compinit; compinit
 [ -x "$(command -v spawnctl)" ] && spawnctl completion zsh > "${fpath[1]}/_spawnctl"
+command -v flux >/dev/null && . <(flux completion zsh) && compdef _flux flux
 
 # Functions
 fpath=( ~/.dotfiles/zsh/functions "${fpath[@]}" )
@@ -35,6 +36,8 @@ alias cls="clear"
 alias watch="watch "
 alias pls="sudo !!"
 alias k="kubectl"
+alias kc="kubectx"
+alias kn="kubens"
 alias d="docker"
 alias s="spawnctl"
 alias side="spawn-ide"
