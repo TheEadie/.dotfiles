@@ -21,6 +21,7 @@ source ~/.zsh-defer/zsh-defer.plugin.zsh
 path+=("$HOME/.dotnet/tools")
 path+=("$HOME/.spawnctl/bin")
 path+=("/opt/schemacrawler/bin")
+path+=("/usr/local/bin")
 
 # Completions
 autoload -U compinit; compinit
