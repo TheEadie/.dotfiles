@@ -20,6 +20,9 @@
 [init]
 	defaultBranch = main
 
+[includeIf "gitdir/i:redgate/"]
+    path = ~/.gitconfig.redgate
+
 [includeIf "gitdir/i:c:/"]
     path = ~/.gitconfig.windows
 [includeIf "gitdir/i:/mnt/c/"]

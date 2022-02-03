@@ -22,6 +22,7 @@ ln -sv ~/.dotfiles/git/.gitconfig ~
 ln -sv ~/.dotfiles/git/.gitconfig.unix ~
 ln -sv ~/.dotfiles/git/.gitconfig.wsl ~
 ln -sv ~/.dotfiles/git/.gitconfig.windows ~
+ln -sv ~/.dotfiles/git/.gitconfig.redgate ~
 
 # Restart ZSH
 exec zsh
