@@ -13,6 +13,7 @@ Write-Output $CurrentDirectory
 # Git
 New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory ".gitconfig") -Target (Join-Path $CurrentDirectory "git/.gitconfig")
 New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory ".gitconfig.windows") -Target (Join-Path $CurrentDirectory "git/.gitconfig.windows")
+New-Item -ItemType SymbolicLink -Path (Join-Path $HomeDirectory ".gitconfig.redgate") -Target (Join-Path $CurrentDirectory "git/.gitconfig.redgate")
 
 # Windows Terminal
 New-Item -ItemType SymbolicLink -Path (Join-Path $WindowsTerminalConfigDirectory "settings.json") -Target (Join-Path $CurrentDirectory "terminals/windows-terminal/settings.json")
