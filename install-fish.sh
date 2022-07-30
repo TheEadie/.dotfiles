@@ -1,5 +1,7 @@
-# Install Fish 
+# Install Brew and Fish
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew install fish
+brew install starship
 
 # Clean up
 rm ~/.gitconfig
