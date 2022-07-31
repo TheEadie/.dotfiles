@@ -1,6 +1,24 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+format = """
+$all\
+$fill \
+$status\
+$time\
+$line_break\
+$jobs\
+$battery\
+$shell\
+$character
+"""
 add_newline = true
+
+[time]
+disabled = false
+
+[status]
+format = "[$symbol $status]($style) "
+disabled = false
 
 [container]
 disabled = true
