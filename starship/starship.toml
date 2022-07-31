@@ -5,3 +5,5 @@ add_newline = true
 [container]
 disabled = true
 
+[dotnet]
+detect_extensions = ["sln", "csproj", "fsproj", "xproj"]
