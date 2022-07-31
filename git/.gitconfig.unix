@@ -1,6 +1,29 @@
 [core]
-	autocrlf	= input
-	editor		= vim
+	autocrlf	 = input
+	editor		 = vim
+	pager 		 = delta
 [alias]
 	cleanup		= "!git checkout master && git remote prune origin && git prune-branches" 
 	prune-branches	= !sh -c 'git branch --merged | grep -v "^*" | xargs git branch -d'
+
+[interactive]
+    diffFilter = delta --color-only
+[add.interactive]
+    useBuiltin = false # required for git 2.37.0
+
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    light = false      # set to true if you're in a terminal w/ a light background color (e.g. the default macOS terminal)
+    side-by-side = true
+    minus-emph-style = syntax bold "#e5534b"
+    minus-style = syntax "#e5938b"
+    plus-emph-style = syntax bold "#56AB5A"
+    plus-style = syntax "#86AB8A"
+    line-numbers-minus-style = "#e5534b" bold #"#ff0051" bold
+    line-numbers-plus-style = "#56AB5A" bold #"#03e57f" bold
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
