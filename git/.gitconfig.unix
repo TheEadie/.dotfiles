@@ -15,10 +15,10 @@
     navigate = true    # use n and N to move between diff sections
     light = false      # set to true if you're in a terminal w/ a light background color (e.g. the default macOS terminal)
     side-by-side = true
-    minus-emph-style = syntax bold "#e5534b"
-    minus-style = syntax "#e5938b"
-    plus-emph-style = syntax bold "#56AB5A"
-    plus-style = syntax "#86AB8A"
+    minus-emph-style = normal bold "#e5534b"
+    minus-style = normal "#e5938b"
+    plus-emph-style = normal bold "#56AB5A"
+    plus-style = normal "#86AB8A"
     line-numbers-minus-style = "#e5534b" bold #"#ff0051" bold
     line-numbers-plus-style = "#56AB5A" bold #"#03e57f" bold
 
