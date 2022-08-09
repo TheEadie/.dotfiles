@@ -1,6 +1,6 @@
 [core]
 	autocrlf	= true
-	editor		= nano
+	editor		= nvim
 [alias]
 	cleanup		= "!git checkout master && git remote prune origin && git prune-branches" 
 	prune-branches	= !sh -c 'git branch --merged | grep -v "^*" | xargs git branch -d'
