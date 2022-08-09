@@ -4,7 +4,7 @@ eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 #Run tmux
 if status is-interactive
 and not set -q TMUX
-    exec tmux
+    tmux attach -t base || tmux new -s base
 end
 
 # Aliases
