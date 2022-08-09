@@ -21,5 +21,7 @@ alias s="spawnctl"
 alias gs="git status"
 alias gd="git diff"
 
+set -gx BAT_THEME "Dracula"
+
 # Start Starship
 starship init fish | source
