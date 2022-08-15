@@ -7,6 +7,9 @@ and not set -q TMUX
     tmux attach -t base || tmux new -s base
 end
 
+fish_add_path -P "$HOME/.spawnctl/bin"
+fish_add_path -P "$HOME/.dotnet"
+
 # Aliases
 if type -q exa; alias ls="exa"; end
 if type -q exa; alias la="exa -a"; end
