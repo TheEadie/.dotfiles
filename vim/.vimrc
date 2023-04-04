@@ -10,3 +10,4 @@ filetype indent on
 packadd! dracula
 syntax on
 colorscheme dracula
+autocmd FileType gitcommit exec 'au VimEnter * startinsert'
