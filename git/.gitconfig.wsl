@@ -16,9 +16,9 @@
     light = false      # set to true if you're in a terminal w/ a light background color (e.g. the default macOS terminal)
     side-by-side = true
     minus-emph-style = normal bold "#e5534b"
-    minus-style = normal "#e5938b"
+    minus-style = normal "#805B65"
     plus-emph-style = normal bold "#56AB5A"
-    plus-style = normal "#86AB8A"
+    plus-style = normal "#5A8074"
     line-numbers-minus-style = "#e5534b" bold #"#ff0051" bold
     line-numbers-plus-style = "#56AB5A" bold #"#03e57f" bold
 

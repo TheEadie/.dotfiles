@@ -1,12 +1,6 @@
 # Get Brew apps on $PATH
 eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 
-#Run tmux
-if status is-interactive
-and not set -q TMUX
-    tmux attach -t base || tmux new -s base
-end
-
 fish_add_path -P "$HOME/.spawnctl/bin"
 fish_add_path -P "$HOME/.dotnet"
 
