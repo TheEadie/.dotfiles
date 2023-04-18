@@ -1,3 +1,8 @@
 [user]
 	name		= David Eadie
 	email		= david.eadie@red-gate.com
+	signingkey  = 38265E666256B25B
+[commit]
+	gpgsign = true
+[gpg]
+	program = gpg
