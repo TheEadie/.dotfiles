@@ -1,7 +1,7 @@
 # Get Brew apps on $PATH
 eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 
-fish_add_path -P "$HOME/.spawnctl/bin"
+# Add to $PATH
 fish_add_path -P "$HOME/.dotnet"
 
 # Aliases
@@ -18,7 +18,9 @@ alias s="spawnctl"
 alias gs="git status"
 alias gd="git diff"
 
+# Environment variables
 set -gx BAT_THEME "Dracula"
+set -gx RGCLONE_API_ENDPOINT "https://clone-internal.red-gate.com:8132/"
 
 # Start Starship
 starship init fish | source
