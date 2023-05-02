@@ -19,6 +19,7 @@ ln -sv ~/.dotfiles/git/.gitconfig.unix ~
 ln -sv ~/.dotfiles/git/.gitconfig.wsl ~
 ln -sv ~/.dotfiles/git/.gitconfig.redgate ~
 ln -sv ~/.dotfiles/fish/config.fish ~/.config/fish/
+ln -sv ~/.dotfiles/fish/git.fish ~/.config/fish/functions
 ln -sv ~/.dotfiles/starship/starship.toml ~/.config/
 ln -sv ~/.dotfiles/tmux/.tmux.conf ~
 ln -sv ~/.dotfiles/vim/.vimrc ~
