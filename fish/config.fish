@@ -14,7 +14,7 @@ alias k="kubectl"
 alias kc="kubectx"
 alias kn="kubens"
 alias d="docker"
-alias s="spawnctl"
+alias rc="rgclone"
 
 alias gs="git status"
 alias gd="git diff"

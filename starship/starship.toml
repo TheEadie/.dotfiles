@@ -26,3 +26,6 @@ disabled = true
 
 [dotnet]
 detect_extensions = ["sln", "csproj", "fsproj", "xproj"]
+
+[git_status]
+windows_starship = "/mnt/c/Program Files/starship/bin/starship.exe"
