@@ -3,7 +3,7 @@ function git
         echo "Using git.exe as on Windows Filesystem"
         command git.exe $argv
     else
-        echo "Using git as on WSL Filesystem"
+        #echo "Using git as on WSL Filesystem"
         command git $argv
     end
 end
