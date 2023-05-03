@@ -4,4 +4,6 @@ Import-Module posh-git
 Import-Module oh-my-posh
 Set-PoshPrompt -Theme Paradox
 
-Set-Alias -Name Install-WormsCli -Value C:\Users\work\AppData\Local\Programs\Worms\.update\Install.ps1
+Invoke-Expression (&starship init powershell)
+
+Set-Alias -Name Install-WormsCli -Value C:\Users\david.eadie\AppData\Local\Programs\Worms\.update\Install.ps1

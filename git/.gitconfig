@@ -2,38 +2,38 @@
 	name		= David Eadie
 	email		= david@eadie.net
 [alias]
-	co		= checkout
-	ls		= branch
+	co			= checkout
+	ls			= branch
 	shove		= push --force-with-lease
 
-	ca		= "!git add -A && git commit -a"
+	ca			= "!git add -A && git commit -a"
 	oops		= "!git add -A && git commit --amend"
 
-	new		= "!git add -A && git stash && git checkout main && git fetch && git reset --hard origin/main && git checkout -b $1 && git stash pop && :"
-	rom		= "!git fetch && git rebase origin/main"
-	mim		= "!git fetch && git merge origin/main"
+	new			= "!git add -A && git stash && git checkout main && git fetch && git reset --hard origin/main && git checkout -b $1 && git stash pop && :"
+	rom			= "!git fetch && git rebase origin/main"
+	mim			= "!git fetch && git merge origin/main"
 	new-master	= "!git add -A && git stash && git checkout master && git fetch && git reset --hard origin/master && git checkout -b $1 && git stash pop && :"
 	rom-master	= "!git fetch && git rebase origin/master"
 	mim-master	= "!git fetch && git merge origin/master"
 
 	graph		= log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+
 [init]
 	defaultBranch = main
 
 [includeIf "gitdir/i:redgate/"]
     path = ~/.gitconfig.redgate
-
 [includeIf "gitdir/i:c:/"]
     path = ~/.gitconfig.windows
-[includeIf "gitdir/i:/mnt/c/"]
+[includeIf "gitdir/i:mnt/c/"]
     path = ~/.gitconfig.wsl
 [includeIf "gitdir/i:d:/"]
     path = ~/.gitconfig.windows
-[includeIf "gitdir/i:/mnt/d/"]
+[includeIf "gitdir/i:mnt/d/"]
     path = ~/.gitconfig.wsl
-[includeIf "gitdir/i:/users/"]
+[includeIf "gitdir/i:users/"]
     path = ~/.gitconfig.unix
-[includeIf "gitdir/i:/home/"]
+[includeIf "gitdir/i:home/"]
     path = ~/.gitconfig.unix
 
 [url "https://"]
