@@ -3,6 +3,7 @@ eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 
 # Add to $PATH
 fish_add_path -P "$HOME/.dotnet"
+fish_add_path -P "$HOME/.dotnet/tools"
 fish_add_path -P "$HOME/.cargo/bin"
 
 # Aliases
