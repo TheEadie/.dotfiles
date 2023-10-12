@@ -3,7 +3,7 @@
 	editor		 = vim
 	pager 		 = delta
 [alias]
-	cleanup		= "!git checkout master && git remote prune origin && git prune-branches" 
+	cleanup		= "!git checkout main && git remote prune origin && git prune-branches"
 	prune-branches	= !sh -c 'git branch --merged | grep -v "^*" | xargs git branch -d'
 
 [interactive]
