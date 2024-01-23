@@ -1,5 +1,6 @@
 function git
-    if [ (string split "/mnt/c/" "$PWD" | wc -l) -eq 2 ]
+    if [ (string split "/mnt/c/" "$PWD" | wc -l) -eq 2 ] ||
+       [ (string split "/mnt/d/" "$PWD" | wc -l) -eq 2 ]
         echo "Using git.exe as on Windows Filesystem"
         command git.exe $argv
     else
