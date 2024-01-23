@@ -9,6 +9,7 @@ fish_add_path -P "$HOME/.cargo/bin"
 # Aliases
 if type -q eza; alias ls="eza"; end
 if type -q eza; alias la="eza -a"; end
+if type -q eza; alias ll="eza -l"; end
 if type -q nvim; alias vim="nvim"; end
 alias cls="clear"
 alias k="kubectl"
