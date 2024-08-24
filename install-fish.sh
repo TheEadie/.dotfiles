@@ -13,6 +13,14 @@ rm ~/.config/starship.toml
 rm ~/.tmux.conf
 rm ~/.vimrc
 
+# Install Dracula VIM theme
+mkdir -p ~/.vim/pack/themes/start
+git clone https://github.com/dracula/vim.git ~/.vim/pack/themes/start/dracula
+
+# Create folders that might be missing
+mkdir -p ~/.config/fish
+mkdir -p ~/.config/fish/functions
+
 # Link files from the repo to the HOME dir
 ln -sv ~/.dotfiles/git/.gitconfig ~
 ln -sv ~/.dotfiles/git/.gitconfig.unix ~
