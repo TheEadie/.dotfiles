@@ -9,32 +9,28 @@ sudo passwd <Username>
 ### Configure git
 
 ```
-sudo apt-get install nano
-ssh-keygen -t rsa -C "<email>"
-sudo nano ~/.ssh/config
+ssh-keygen -t ed25519 -C "<email>"
+cat ~/.ssh/id_ed25519.pub
 ```
 
-- Add the following to the empty file
+Copy the public key and upload it to GitHub
 
-```
-Host github.com
- Hostname ssh.github.com
- Port 443
-```
-
-### Install the basics for shell (Tilix, ZSH and OhMyZsh)
+### Install the basics for shell
 
 ```
 git clone git@github.com:TheEadie/.dotfiles.git
 
 cd ~/.dotfiles
-./install.sh
-
-cd ~/.dotfiles/terminals/tilix
-./setup.sh
+./install-fish.sh
 ```
 
-TODO: Automate this as part of setup.sh for tilix
+It will fail the first time after `brew` is installed. Run the provided command to add brew to the PATH and then run again
+
+```
+./install-fish.sh
+```
+
+TODO: Automate this as part of a script for chromeos terminal
  - Download the fonts from https://github.com/romkatv/powerlevel10k
  - Copy them to the linux files
  - Install the fonts
@@ -44,7 +40,16 @@ sudo ls /usr/local/share/fonts/
 fc-cache -v
 ```
 
-### Install Wine
+### Fix Alt-Tab in full screen apps
+
+```
+mkdir -p ~/.config/systemd/user/sommelier-x@0.service.d
+echo -e '[Service]\nEnvironment="SOMMELIER_ACCELERATORS=Super_L,<Alt>tab"' > ~/.config/systemd/user/sommelier-x@0.service.d/override.conf
+systemctl --user daemon-reload
+systemctl --user restart sommelier-x@0.service
+```
+
+### (Side-quest: Install Wine)
 ```
 sudo apt update
 sudo apt install software-properties-common
@@ -64,12 +69,4 @@ mv '~/.wine/drive_c/GOG Games/Worms Armaggedon' '~/Worms/'
 cd ~/Worms
 wine runas /trustlevel:0x20000 wa.exe
 
-```
-### Fix Alt-Tab in full screen apps
-
-```
-mkdir -p ~/.config/systemd/user/sommelier-x@0.service.d
-echo -e '[Service]\nEnvironment="SOMMELIER_ACCELERATORS=Super_L,<Alt>tab"' > ~/.config/systemd/user/sommelier-x@0.service.d/override.conf
-systemctl --user daemon-reload
-systemctl --user restart sommelier-x@0.service
 ```
