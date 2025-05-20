@@ -20,6 +20,7 @@ alias rc="rgclone"
 
 alias gs="git status"
 alias gd="git diff"
+alias gg="git graph"
 
 # Environment variables
 set -gx BAT_THEME "Dracula"
@@ -27,3 +28,6 @@ set -gx RGCLONE_API_ENDPOINT "https://clone-internal.red-gate.com:8132/"
 
 # Start Starship
 starship init fish | source
+
+# Fix Wayland on WSL
+ln -sf  /mnt/wslg/runtime-dir/wayland-* $XDG_RUNTIME_DIR/
