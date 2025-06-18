@@ -28,6 +28,10 @@
     path = ~/.gitconfig.windows
 [includeIf "gitdir/i:mnt/d/"]
     path = ~/.gitconfig.wsl
+[includeIf "gitdir/i:s:/"]
+    path = ~/.gitconfig.windows
+[includeIf "gitdir/i:mnt/s/"]
+    path = ~/.gitconfig.wsl
 [includeIf "gitdir/i:users/"]
     path = ~/.gitconfig.unix
 [includeIf "gitdir/i:home/"]
