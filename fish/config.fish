@@ -9,10 +9,10 @@ fish_add_path -P "$HOME/.cargo/bin"
 # Only in WSL
 if test -r /proc/version; and string match -q "*microsoft*" (cat /proc/version)
     function cursor
-        /mnt/c/Users/david.eadie/AppData/Local/Programs/Cursor/Cursor.exe $argv
+        /mnt/c/Users/david.eadie/AppData/Local/Programs/Cursor/Cursor.exe $argv >/dev/null 2>&1 &
     end
     function code
-        /mnt/c/Users/david.eadie/AppData/Local/Programs/Microsoft\ VS\ Code/Code.exe $argv
+        /mnt/c/Users/david.eadie/AppData/Local/Programs/Microsoft\ VS\ Code/Code.exe $argv >/dev/null 2>&1 &
     end
 end
 
