@@ -6,6 +6,16 @@ fish_add_path -P "$HOME/.dotnet"
 fish_add_path -P "$HOME/.dotnet/tools"
 fish_add_path -P "$HOME/.cargo/bin"
 
+# Only in WSL
+if test -r /proc/version; and string match -q "*microsoft*" (cat /proc/version)
+    function cursor
+        /mnt/c/Users/david.eadie/AppData/Local/Programs/Cursor/Cursor.exe $argv
+    end
+    function code
+        /mnt/c/Users/david.eadie/AppData/Local/Programs/Microsoft\ VS\ Code/Code.exe $argv
+    end
+end
+
 # Aliases
 if type -q eza; alias ls="eza"; end
 if type -q eza; alias la="eza -a"; end
