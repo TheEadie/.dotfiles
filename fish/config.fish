@@ -28,6 +28,8 @@ alias kn="kubens"
 alias d="docker"
 alias rc="rgclone"
 
+alias yolo="claude --dangerously-skip-permissions"
+
 alias gs="git status"
 alias gd="git diff"
 alias gg="git graph"
