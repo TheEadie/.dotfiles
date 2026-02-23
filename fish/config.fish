@@ -8,6 +8,9 @@ fish_add_path -P "$HOME/.cargo/bin"
 
 # Only in WSL
 if test -r /proc/version; and string match -q "*microsoft*" (cat /proc/version)
+    # Fix Wayland on WSL
+    ln -sf  /mnt/wslg/runtime-dir/wayland-* $XDG_RUNTIME_DIR
+
     function cursor
         /mnt/c/Users/david.eadie/AppData/Local/Programs/Cursor/Cursor.exe $argv >/dev/null 2>&1 &
     end
@@ -41,5 +44,5 @@ set -gx RGCLONE_API_ENDPOINT "https://clone-internal.red-gate.com:8132/"
 # Start Starship
 starship init fish | source
 
-# Fix Wayland on WSL
-ln -sf  /mnt/wslg/runtime-dir/wayland-* $XDG_RUNTIME_DIR/
+
+
