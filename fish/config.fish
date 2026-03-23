@@ -17,6 +17,9 @@ if test -r /proc/version; and string match -q "*microsoft*" (cat /proc/version)
     function code
         /mnt/c/Users/david.eadie/AppData/Local/Programs/Microsoft\ VS\ Code/Code.exe $argv >/dev/null 2>&1 &
     end
+
+    # Claude Code WSL2 fix - remove WindowsPowerShell from PATH
+    set -gx PATH (string match -v '*WindowsPowerShell*' $PATH)
 end
 
 # Aliases
