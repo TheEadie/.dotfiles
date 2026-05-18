@@ -197,8 +197,16 @@ else
     ctx_str=""
 fi
 
+effort=$($JQ -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null)
+
 model_str=""
-[ -n "$model_name" ] && model_str="$model_name | "
+if [ -n "$model_name" ]; then
+    if [ -n "$effort" ]; then
+        model_str="$model_name ($effort) | "
+    else
+        model_str="$model_name | "
+    fi
+fi
 
 if [ -n "$ctx_str" ]; then
     printf "%s%s%s" "$model_str" "$ctx_str" "$cost_str"
