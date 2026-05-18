@@ -13,9 +13,9 @@ session_id=$(echo "$input" | $JQ -r '.session_id // empty' 2>/dev/null)
 transcript=$(echo "$input" | $JQ -r '.transcript_path // empty' 2>/dev/null)
 [ -z "$transcript" ] || [ ! -f "$transcript" ] && exit 0
 
-# Extract per-model token totals from transcript.
+# Extract per-model token totals from transcript (JSONL — slurp into array).
 # Deduplicate by message ID (same message appears once per content block).
-model_data=$(cat "$transcript" | $JQ -r '
+model_data=$($JQ -s -r '
     [.[] | select(.type == "assistant" and .message.usage != null)]
     | unique_by(.message.id)
     | group_by(.message.model)[]
@@ -27,7 +27,7 @@ model_data=$(cat "$transcript" | $JQ -r '
         (map(.message.usage.cache_read_input_tokens // 0) | add | tostring)
       ]
     | join("\t")
-' 2>/dev/null)
+' "$transcript" 2>/dev/null)
 
 [ -z "$model_data" ] && exit 0
 

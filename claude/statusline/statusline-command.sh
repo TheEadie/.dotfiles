@@ -45,9 +45,15 @@ if [ -n "$session_id" ] && [ -n "$cost" ]; then
             [ -f "$PERIOD_FILE" ] || echo '[]' > "$PERIOD_FILE"
             (
                 flock 9
+                # Never decrease stored cost: --resume restarts the CLI's cost counter at 0,
+                # so a naive overwrite would erase prior spend. Stop hook does the authoritative
+                # transcript-based recompute; this flush just keeps daily/weekly totals fresh
+                # between turns.
                 $JQ --arg sid "$session_id" --arg date "$today" --argjson cost "$cost" --argjson ts "$now_ts" '
                     if any(.[]; .session_id == $sid) then
-                        map(if .session_id == $sid then . + {cost: $cost, timestamp: $ts} else . end)
+                        map(if .session_id == $sid
+                            then . + {cost: ([.cost, $cost] | max), timestamp: $ts}
+                            else . end)
                     else
                         . + [{session_id: $sid, date: $date, cost: $cost, timestamp: $ts}]
                     end
@@ -111,15 +117,34 @@ window_color() {
     }'
 }
 
+# Pace arrow: projects final usage at reset (projected% = used% * window / elapsed)
+# and renders ↑ red (will exhaust), → yellow (on pace), ↓ green (under-consuming).
+pace_arrow() {
+    pct=$1
+    secs_remaining=$2
+    window_duration=$3
+    [ -z "$pct" ] && return 0
+    [ "$secs_remaining" -le 0 ] && return 0
+    elapsed=$(( window_duration - secs_remaining ))
+    [ "$elapsed" -le 0 ] && return 0
+    echo "$pct $window_duration $elapsed" | awk '{
+        projected = $1 * $2 / $3
+        if (projected > 110)      printf " \033[31m↑\033[0m"
+        else if (projected >= 90) printf " \033[33m→\033[0m"
+        else                      printf " \033[32m↓\033[0m"
+    }'
+}
+
 if [ -n "$rl_resets_5h" ] && [ "$rl_resets_5h" != "null" ]; then
     secs_5h=$(( rl_resets_5h - now_ts ))
     if [ "$secs_5h" -gt 0 ]; then
         pct_5h=""
         [ -n "$rl_pct_5h" ] && pct_5h=" $(printf "%.0f" "$rl_pct_5h")%"
+        arrow_5h=$(pace_arrow "$rl_pct_5h" "$secs_5h" 18000)
         col=$(window_color "$rl_pct_5h")
         rst=""
         [ -n "$col" ] && rst=$(printf '\033[0m')
-        window_str="${window_str} | ${col}$(fmt_countdown $secs_5h)${pct_5h}${rst}"
+        window_str="${window_str} | ${col}$(fmt_countdown $secs_5h)${pct_5h}${rst}${arrow_5h}"
     fi
 fi
 
@@ -128,10 +153,11 @@ if [ -n "$rl_resets_7d" ] && [ "$rl_resets_7d" != "null" ]; then
     if [ "$secs_7d" -gt 0 ]; then
         pct_7d=""
         [ -n "$rl_pct_7d" ] && pct_7d=" $(printf "%.0f" "$rl_pct_7d")%"
+        arrow_7d=$(pace_arrow "$rl_pct_7d" "$secs_7d" 604800)
         col=$(window_color "$rl_pct_7d")
         rst=""
         [ -n "$col" ] && rst=$(printf '\033[0m')
-        window_str="${window_str} | ${col}$(fmt_countdown $secs_7d)${pct_7d}${rst}"
+        window_str="${window_str} | ${col}$(fmt_countdown $secs_7d)${pct_7d}${rst}${arrow_7d}"
     fi
 fi
 
