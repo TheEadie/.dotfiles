@@ -34,6 +34,8 @@ ln -sv ~/.dotfiles/starship/starship.toml ~/.config/
 ln -sv ~/.dotfiles/tmux/.tmux.conf ~
 ln -sv ~/.dotfiles/vim/.vimrc ~
 ln -sv ~/.dotfiles/claude/skills ~/.claude/skills
+ln -sv ~/.dotfiles/claude/hooks ~/.claude/hooks
+ln -sv ~/.dotfiles/claude/statusline ~/.claude/statusline
 
 # Restart Shell
 exec fish
