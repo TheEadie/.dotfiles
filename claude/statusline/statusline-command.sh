@@ -209,5 +209,5 @@ fi
 if [ -n "$ctx_str" ]; then
     printf "%s%s%s" "$model_str" "$ctx_str" "$cost_str"
 else
-    printf "%s" "$model_str" | sed 's/ | $//'
+    printf "%s%s" "$model_str" "${cost_str# | }"
 fi
