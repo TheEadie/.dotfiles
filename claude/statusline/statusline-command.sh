@@ -15,8 +15,6 @@ ctx_size=$(echo "$input" | $JQ -r '.context_window.context_window_size // 0')
 total_tokens=$((total_input + total_output))
 
 cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
-has_usage="no"
-[ -n "$cost" ] && has_usage="yes"
 
 # Session cost (live, 2 decimal places)
 session_cost=$(echo "${cost:-0}" | awk '{printf "%.2f", $1}')
@@ -210,8 +208,6 @@ fi
 
 if [ -n "$ctx_str" ]; then
     printf "%s%s%s" "$model_str" "$ctx_str" "$cost_str"
-elif [ "$has_usage" = "yes" ]; then
-    printf "%stokens: %d%s" "$model_str" "$total_tokens" "$cost_str"
 else
     printf "%s" "$model_str" | sed 's/ | $//'
 fi
