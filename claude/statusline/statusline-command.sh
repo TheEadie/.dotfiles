@@ -126,7 +126,10 @@ else
     session_best_ms=${live_api_ms:-0}
 fi
 
-session_cost=$(echo "$session_best_cost" | awk '{printf "%.2f", $1}')
+# Session display uses the raw API value directly — same number /usage shows.
+# (period-costs.json + daily/weekly below still use the baseline-subtracted live_cost
+# so cross-session aggregation isn't double-counted by raw's process-cumulative nature.)
+session_cost=$(awk -v c="${raw_cost:-0}" 'BEGIN { printf "%.2f", c }')
 
 # total = (all archived) - (current session's archived) + (current session's best)
 daily_cost=$(awk -v t="${daily_archived:-0}" -v a="${session_archived_cost:-0}" -v b="$session_best_cost" 'BEGIN { printf "%.2f", t - a + b }')
@@ -232,7 +235,7 @@ fmt_ms() {
     fi
 }
 
-session_time=$(fmt_ms "$session_best_ms")
+session_time=$(fmt_ms "${raw_api_ms:-0}")
 daily_time=$(fmt_ms "$daily_api_ms")
 weekly_time=$(fmt_ms "$weekly_api_ms")
 
