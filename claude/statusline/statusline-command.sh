@@ -284,13 +284,13 @@ GIT_CMD=git
 git_dir="$current_dir"
 case "$current_dir" in
     /mnt/c/*|/mnt/d/*|/mnt/s/*)
-        fs_str=$(printf '\033[1;33mWin\033[0m')
+        fs_str="🪟"
         GIT_CMD=git.exe
         git_dir=$(wslpath -w "$current_dir" 2>/dev/null || echo "$current_dir")
         ;;
     "") ;;
     *)
-        fs_str=$(printf '\033[1;32mLinux\033[0m')
+        fs_str="🐧"
         ;;
 esac
 
