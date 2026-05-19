@@ -275,8 +275,70 @@ if [ -n "$model_name" ]; then
     fi
 fi
 
+# Filesystem indicator (Linux vs Windows) and git info — uses git.exe on WSL
+# mounts so repo lookups don't pay the WSL→Win9P round-trip on every keystroke.
+current_dir=$(echo "$input" | $JQ -r '.workspace.current_dir // .cwd // empty')
+
+fs_str=""
+GIT_CMD=git
+git_dir="$current_dir"
+case "$current_dir" in
+    /mnt/c/*|/mnt/d/*|/mnt/s/*)
+        fs_str=$(printf '\033[1;33m[Win]\033[0m')
+        GIT_CMD=git.exe
+        git_dir=$(wslpath -w "$current_dir" 2>/dev/null || echo "$current_dir")
+        ;;
+    "") ;;
+    *)
+        fs_str=$(printf '\033[1;32m[Linux]\033[0m')
+        ;;
+esac
+
+git_str=""
+if [ -n "$current_dir" ] && GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-parse --git-dir >/dev/null 2>&1; then
+    branch=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" branch --show-current 2>/dev/null)
+    if [ -z "$branch" ]; then
+        branch=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" describe --tags --exact-match 2>/dev/null \
+              || GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-parse --short HEAD 2>/dev/null \
+              || echo detached)
+    fi
+    git_str=$(printf '\033[1;35mon %s\033[0m' "$branch")
+
+    porcelain=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" status --porcelain 2>/dev/null)
+    if [ -n "$porcelain" ]; then
+        untracked=$(echo "$porcelain" | grep -c '^??')
+        modified=$(echo "$porcelain"  | grep -c '^ M')
+        deleted=$(echo "$porcelain"   | grep -c '^D')
+        staged=$(echo "$porcelain"    | grep -c '^[MARC]')
+        indicators=""
+        [ "$untracked" -gt 0 ] && indicators="${indicators}?$untracked "
+        [ "$modified"  -gt 0 ] && indicators="${indicators}!$modified "
+        [ "$staged"    -gt 0 ] && indicators="${indicators}✓$staged "
+        [ "$deleted"   -gt 0 ] && indicators="${indicators}✗$deleted "
+        if [ -n "$indicators" ]; then
+            git_str="$git_str $(printf '\033[1;31m[%s]\033[0m' "${indicators% }")"
+        fi
+    fi
+
+    upstream=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)
+    if [ -n "$upstream" ]; then
+        ahead=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD  -C "$git_dir" rev-list --count '@{upstream}..HEAD' 2>/dev/null || echo 0)
+        behind=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-list --count 'HEAD..@{upstream}' 2>/dev/null || echo 0)
+        if [ "$ahead" -gt 0 ] || [ "$behind" -gt 0 ]; then
+            diverge=""
+            [ "$ahead"  -gt 0 ] && diverge="${diverge}↑$ahead"
+            [ "$behind" -gt 0 ] && diverge="${diverge}↓$behind"
+            git_str="$git_str $(printf '\033[1;33m%s\033[0m' "$diverge")"
+        fi
+    fi
+fi
+
+top_line="$model_str"
+[ -n "$fs_str" ]  && top_line="$top_line | $fs_str"
+[ -n "$git_str" ] && top_line="$top_line | $git_str"
+
 if [ -n "$ctx_str" ]; then
-    printf "%s\n%s%s" "$model_str" "$ctx_str" "$cost_str"
+    printf "%s\n%s%s" "$top_line" "$ctx_str" "$cost_str"
 else
-    printf "%s\n%s" "$model_str" "${cost_str# | }"
+    printf "%s\n%s" "$top_line" "${cost_str# | }"
 fi
