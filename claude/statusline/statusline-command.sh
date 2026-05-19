@@ -257,9 +257,9 @@ if [ -n "$used_pct" ] && [ "$ctx_size" -gt 0 ] 2>/dev/null; then
         bar = bar reset
         printf "%s", bar
     }')
-    ctx_str="[${bar}] ${used_fmt}/${ctx_fmt}"
+    ctx_str="🧠 [${bar}] ${used_fmt}/${ctx_fmt}"
 elif [ -n "$used_pct" ]; then
-    ctx_str="ctx: $(printf "%.0f" "$used_pct")%"
+    ctx_str="🧠 $(printf "%.0f" "$used_pct")%"
 else
     ctx_str=""
 fi
@@ -269,9 +269,9 @@ effort=$($JQ -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/nul
 model_str=""
 if [ -n "$model_name" ]; then
     if [ -n "$effort" ]; then
-        model_str="$model_name ($effort)"
+        model_str="🤖 $model_name ($effort)"
     else
-        model_str="$model_name"
+        model_str="🤖 $model_name"
     fi
 fi
 
