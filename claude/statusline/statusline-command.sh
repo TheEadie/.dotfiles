@@ -190,7 +190,7 @@ if [ -n "$rl_resets_5h" ] && [ "$rl_resets_5h" != "null" ]; then
         col=$(window_color "$rl_pct_5h")
         rst=""
         [ -n "$col" ] && rst=$(printf '\033[0m')
-        window_str="${window_str} | ${col}$(fmt_countdown $secs_5h)${pct_5h}${rst}${arrow_5h}"
+        window_str="${window_str}  ${col}$(fmt_countdown $secs_5h)${pct_5h}${rst}${arrow_5h}"
     fi
 fi
 
@@ -203,7 +203,7 @@ if [ -n "$rl_resets_7d" ] && [ "$rl_resets_7d" != "null" ]; then
         col=$(window_color "$rl_pct_7d")
         rst=""
         [ -n "$col" ] && rst=$(printf '\033[0m')
-        window_str="${window_str} | ${col}$(fmt_countdown $secs_7d)${pct_7d}${rst}${arrow_7d}"
+        window_str="${window_str}  ${col}$(fmt_countdown $secs_7d)${pct_7d}${rst}${arrow_7d}"
     fi
 fi
 
@@ -228,7 +228,7 @@ session_time=$(fmt_ms "${raw_api_ms:-0}")
 daily_time=$(fmt_ms "$daily_api_ms")
 weekly_time=$(fmt_ms "$weekly_api_ms")
 
-cost_str=" | ✨ \$${session_cost}${session_time} | 🌅 \$${daily_cost}${daily_time} | 🗓️ \$${weekly_cost}${weekly_time}${window_str} |"
+cost_str="✨ \$${session_cost}${session_time}  🌅 \$${daily_cost}${daily_time}  🗓️ \$${weekly_cost}${weekly_time}${window_str}"
 
 fmt_tokens() {
     echo "$1" | awk '{
@@ -334,11 +334,11 @@ if [ -n "$current_dir" ] && GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-pars
 fi
 
 top_line="$model_str"
-[ -n "$fs_str" ]  && top_line="$top_line | $fs_str"
-[ -n "$git_str" ] && top_line="$top_line | $git_str"
+[ -n "$fs_str" ]  && top_line="$top_line  $fs_str"
+[ -n "$git_str" ] && top_line="$top_line  $git_str"
 
 if [ -n "$ctx_str" ]; then
-    printf "%s\n%s%s" "$top_line" "$ctx_str" "$cost_str"
+    printf "%s\n%s  %s" "$top_line" "$ctx_str" "$cost_str"
 else
-    printf "%s\n%s" "$top_line" "${cost_str# | }"
+    printf "%s\n%s" "$top_line" "$cost_str"
 fi
