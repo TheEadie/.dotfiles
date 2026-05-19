@@ -18,41 +18,27 @@ raw_cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
 raw_api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // empty')
 
 # cost.total_cost_usd is process-cumulative, not session-scoped: /clear assigns a new
-# session_id but the same CLI process keeps adding to the counter. Without an
-# adjustment, the post-/clear session would report the prior session's spend on top
-# of its own and double-count it in the archive. Snapshot the live counter on first
-# sight of each session_id and subtract it so $cost/$api_ms below represent this
-# process's contribution to the session. The baseline file is never rewritten — the
-# stop hook deletes it at session end, so a leaked file is the worst-case price of
-# not chasing edge-case resets here, vs. the much worse failure mode of a bad reset
-# producing a negative baseline that inflates every subsequent render.
-#
-# Some renders (notably post-turn) arrive without .cost at all. Treating that as 0
-# would zero out session_cost AND erase this session's contribution from daily/weekly
-# (which exclude the current session from the archive sum and add live cost back).
-# In that case, fall back to whatever this session last flushed to period-costs.json.
-cost=0
-api_ms=0
-if [ -n "$session_id" ]; then
+# session_id but the same CLI process keeps adding to the counter. Snapshot the live
+# counter on first sight of each session_id and subtract it so $cost/$api_ms below
+# represent this process's contribution to the session. The stop hook deletes the
+# baseline file at session end (when it has already written the authoritative cost
+# to period-costs.json), so post-stop renders will re-snapshot the baseline and
+# report a live cost of 0 — that's handled below by taking max(archived, live).
+live_cost=0
+live_api_ms=0
+if [ -n "$session_id" ] && [ -n "$raw_cost" ]; then
     BASELINE_FILE="$HOME/.claude/.baseline-${session_id}"
-    if [ -n "$raw_cost" ]; then
-        if [ ! -f "$BASELINE_FILE" ]; then
-            printf '%s %s\n' "$raw_cost" "${raw_api_ms:-0}" > "$BASELINE_FILE"
-        fi
-        read base_cost base_api_ms < "$BASELINE_FILE"
-        cost=$(awk -v c="$raw_cost" -v b="${base_cost:-0}" 'BEGIN { v=c-b; if (v<0) v=0; printf "%.10f", v }')
-        api_ms=$(( ${raw_api_ms:-0} - ${base_api_ms:-0} ))
-        [ "$api_ms" -lt 0 ] && api_ms=0
-    elif [ -f "$PERIOD_FILE" ]; then
-        cost=$($JQ -r --arg sid "$session_id" 'map(select(.session_id == $sid)) | .[0].cost // 0' "$PERIOD_FILE" 2>/dev/null)
-        api_ms=$($JQ -r --arg sid "$session_id" 'map(select(.session_id == $sid)) | .[0].api_ms // 0' "$PERIOD_FILE" 2>/dev/null)
-        cost=${cost:-0}
-        api_ms=${api_ms:-0}
+    if [ ! -f "$BASELINE_FILE" ]; then
+        printf '%s %s\n' "$raw_cost" "${raw_api_ms:-0}" > "$BASELINE_FILE"
     fi
+    read base_cost base_api_ms < "$BASELINE_FILE"
+    live_cost=$(awk -v c="$raw_cost" -v b="${base_cost:-0}" 'BEGIN { v=c-b; if (v<0) v=0; printf "%.10f", v }')
+    live_api_ms=$(( ${raw_api_ms:-0} - ${base_api_ms:-0} ))
+    [ "$live_api_ms" -lt 0 ] && live_api_ms=0
 fi
-
-# Session cost (live, 2 decimal places)
-session_cost=$(echo "${cost:-0}" | awk '{printf "%.2f", $1}')
+# Keep names for the flush block below (still wants this turn's live contribution).
+cost=$live_cost
+api_ms=$live_api_ms
 
 today=$(date +%Y-%m-%d)
 week_ago=$(date -d "7 days ago" +%Y-%m-%d)
@@ -98,30 +84,55 @@ if [ -n "$session_id" ] && [ -n "$cost" ]; then
     fi
 fi
 
-# Daily/weekly: archive sum EXCLUDING this session (avoid double-count with live cost)
+# Daily/weekly: sum ALL archived sessions, then for the current session add the
+# excess of live over archived. During a turn the live value leads (the flush only
+# runs every 30s); after the stop hook archives the authoritative total and clears
+# the baseline, live drops to 0 and the archive carries the value. max(archive,
+# live) picks the right one in both phases without double-counting.
 daily_archived=0
 weekly_archived=0
 daily_archived_ms=0
 weekly_archived_ms=0
+session_archived_cost=0
+session_archived_ms=0
 if [ -f "$PERIOD_FILE" ]; then
-    daily_archived=$($JQ -r --arg today "$today" --arg sid "$session_id" \
-        '[.[] | select(.date == $today and .session_id != $sid)] | map(.cost) | add // 0' \
+    daily_archived=$($JQ -r --arg today "$today" \
+        '[.[] | select(.date == $today)] | map(.cost) | add // 0' \
         "$PERIOD_FILE" 2>/dev/null || echo 0)
-    weekly_archived=$($JQ -r --arg since "$week_ago" --arg sid "$session_id" \
-        '[.[] | select(.date >= $since and .session_id != $sid)] | map(.cost) | add // 0' \
+    weekly_archived=$($JQ -r --arg since "$week_ago" \
+        '[.[] | select(.date >= $since)] | map(.cost) | add // 0' \
         "$PERIOD_FILE" 2>/dev/null || echo 0)
-    daily_archived_ms=$($JQ -r --arg today "$today" --arg sid "$session_id" \
-        '[.[] | select(.date == $today and .session_id != $sid)] | map(.api_ms // 0) | add // 0' \
+    daily_archived_ms=$($JQ -r --arg today "$today" \
+        '[.[] | select(.date == $today)] | map(.api_ms // 0) | add // 0' \
         "$PERIOD_FILE" 2>/dev/null || echo 0)
-    weekly_archived_ms=$($JQ -r --arg since "$week_ago" --arg sid "$session_id" \
-        '[.[] | select(.date >= $since and .session_id != $sid)] | map(.api_ms // 0) | add // 0' \
+    weekly_archived_ms=$($JQ -r --arg since "$week_ago" \
+        '[.[] | select(.date >= $since)] | map(.api_ms // 0) | add // 0' \
         "$PERIOD_FILE" 2>/dev/null || echo 0)
+    if [ -n "$session_id" ]; then
+        session_archived_cost=$($JQ -r --arg sid "$session_id" \
+            'map(select(.session_id == $sid)) | .[0].cost // 0' \
+            "$PERIOD_FILE" 2>/dev/null || echo 0)
+        session_archived_ms=$($JQ -r --arg sid "$session_id" \
+            'map(select(.session_id == $sid)) | .[0].api_ms // 0' \
+            "$PERIOD_FILE" 2>/dev/null || echo 0)
+    fi
 fi
 
-daily_cost=$(echo "${daily_archived:-0} ${cost:-0}" | awk '{printf "%.2f", $1 + $2}')
-weekly_cost=$(echo "${weekly_archived:-0} ${cost:-0}" | awk '{printf "%.2f", $1 + $2}')
-daily_api_ms=$(( ${daily_archived_ms:-0} + ${api_ms:-0} ))
-weekly_api_ms=$(( ${weekly_archived_ms:-0} + ${api_ms:-0} ))
+# Best estimate of this session's contribution: max(archived, live).
+session_best_cost=$(awk -v a="${session_archived_cost:-0}" -v l="${live_cost:-0}" 'BEGIN { printf "%.10f", (a>l ? a : l) }')
+if [ "${session_archived_ms:-0}" -gt "${live_api_ms:-0}" ] 2>/dev/null; then
+    session_best_ms=${session_archived_ms:-0}
+else
+    session_best_ms=${live_api_ms:-0}
+fi
+
+session_cost=$(echo "$session_best_cost" | awk '{printf "%.2f", $1}')
+
+# total = (all archived) - (current session's archived) + (current session's best)
+daily_cost=$(awk -v t="${daily_archived:-0}" -v a="${session_archived_cost:-0}" -v b="$session_best_cost" 'BEGIN { printf "%.2f", t - a + b }')
+weekly_cost=$(awk -v t="${weekly_archived:-0}" -v a="${session_archived_cost:-0}" -v b="$session_best_cost" 'BEGIN { printf "%.2f", t - a + b }')
+daily_api_ms=$(( ${daily_archived_ms:-0} - ${session_archived_ms:-0} + session_best_ms ))
+weekly_api_ms=$(( ${weekly_archived_ms:-0} - ${session_archived_ms:-0} + session_best_ms ))
 
 # Rolling-window reset countdowns — from rate_limits fields in statusline JSON
 fmt_countdown() {
@@ -221,7 +232,7 @@ fmt_ms() {
     fi
 }
 
-session_time=$(fmt_ms "$api_ms")
+session_time=$(fmt_ms "$session_best_ms")
 daily_time=$(fmt_ms "$daily_api_ms")
 weekly_time=$(fmt_ms "$weekly_api_ms")
 
