@@ -58,9 +58,19 @@ if [ -n "$raw_cost" ] || [ -n "$raw_api_ms" ]; then
     if [ -n "$match" ]; then
         stored_cost=$($JQ -r '.cost // 0' "$match" 2>/dev/null || echo 0)
         stored_api_ms=$($JQ -r '.api_ms // 0' "$match" 2>/dev/null || echo 0)
-        regressed=$(awk -v rc="${raw_cost:-0}" -v sc="${stored_cost:-0}" \
-                        -v ra="${raw_api_ms:-0}" -v sa="${stored_api_ms:-0}" \
-                        'BEGIN { print (rc+0 < sc+0 || ra+0 < sa+0) ? 1 : 0 }')
+        # Only count a regression when the raw field is actually present AND lower
+        # than what we stored. If a field is missing from this tick's JSON, ignore
+        # it — empty was being coerced to 0 and tripping a false regression,
+        # creating a fresh record (and double-counting) every time one field was
+        # transiently absent.
+        regressed=$(awk -v rc="${raw_cost}"   -v sc="${stored_cost:-0}" \
+                        -v ra="${raw_api_ms}" -v sa="${stored_api_ms:-0}" \
+                        'BEGIN {
+                            r = 0
+                            if (rc != "" && rc+0 < sc+0) r = 1
+                            if (ra != "" && ra+0 < sa+0) r = 1
+                            print r
+                        }')
         [ "$regressed" = "0" ] && needs_new=0
     fi
 
