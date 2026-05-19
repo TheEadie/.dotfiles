@@ -75,6 +75,24 @@ if [ -n "$raw_cost" ] || [ -n "$raw_api_ms" ]; then
     fi
 
     if [ "$needs_new" = "1" ]; then
+        # If we had an existing record but still decided to roll over, log
+        # it — this should be rare (only true PID reuse or genuine counter
+        # regression). Repeated entries mean the regression check is firing
+        # spuriously and we're double-counting in the daily/weekly sums.
+        if [ -n "$match" ]; then
+            input_cost_json=$(echo "$input" | $JQ -c '.cost // null' 2>/dev/null)
+            $JQ -n -c \
+                --arg ts "$(date -Iseconds)" \
+                --argjson pid "$cli_pid" \
+                --argjson stored_cost "${stored_cost:-0}" \
+                --argjson stored_api_ms "${stored_api_ms:-0}" \
+                --arg raw_cost "${raw_cost:-}" \
+                --arg raw_api_ms "${raw_api_ms:-}" \
+                --arg old_file "$(basename "$match")" \
+                --argjson input_cost "${input_cost_json:-null}" \
+                '{ts: $ts, pid: $pid, stored_cost: $stored_cost, stored_api_ms: $stored_api_ms, raw_cost: $raw_cost, raw_api_ms: $raw_api_ms, old_file: $old_file, input_cost: $input_cost}' \
+                >> "$HOME/.claude/statusline-regressions.log" 2>/dev/null
+        fi
         proc_file="$PROC_DIR/${cli_pid}-${now_ns}.json"
         started_at=$now_s
         proc_date=$today
