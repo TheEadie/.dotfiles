@@ -15,6 +15,7 @@ ctx_size=$(echo "$input" | $JQ -r '.context_window.context_window_size // 0')
 total_tokens=$((total_input + total_output))
 
 cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
+api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
 
 # Session cost (live, 2 decimal places)
 session_cost=$(echo "${cost:-0}" | awk '{printf "%.2f", $1}')
@@ -22,7 +23,7 @@ session_cost=$(echo "${cost:-0}" | awk '{printf "%.2f", $1}')
 today=$(date +%Y-%m-%d)
 week_ago=$(date -d "7 days ago" +%Y-%m-%d)
 
-# Periodic flush: upsert this session's live cost into period-costs.json every 30s
+# Periodic flush: upsert this session's live cost and api_ms into period-costs.json every 30s
 # so concurrent sessions see each other's accrued spend in the daily/weekly totals.
 # Runs in the background so statusline render is not blocked.
 if [ -n "$session_id" ] && [ -n "$cost" ]; then
@@ -43,17 +44,17 @@ if [ -n "$session_id" ] && [ -n "$cost" ]; then
             [ -f "$PERIOD_FILE" ] || echo '[]' > "$PERIOD_FILE"
             (
                 flock 9
-                # Never decrease stored cost: --resume restarts the CLI's cost counter at 0,
+                # Never decrease stored cost/api_ms: --resume restarts the CLI's counters at 0,
                 # so a naive overwrite would erase prior spend. Stop hook does the authoritative
                 # transcript-based recompute; this flush just keeps daily/weekly totals fresh
                 # between turns.
-                $JQ --arg sid "$session_id" --arg date "$today" --argjson cost "$cost" --argjson ts "$now_ts" '
+                $JQ --arg sid "$session_id" --arg date "$today" --argjson cost "$cost" --argjson api_ms "$api_ms" --argjson ts "$now_ts" '
                     if any(.[]; .session_id == $sid) then
                         map(if .session_id == $sid
-                            then . + {cost: ([.cost, $cost] | max), timestamp: $ts}
+                            then . + {cost: ([.cost, $cost] | max), api_ms: ([(.api_ms // 0), $api_ms] | max), timestamp: $ts}
                             else . end)
                     else
-                        . + [{session_id: $sid, date: $date, cost: $cost, timestamp: $ts}]
+                        . + [{session_id: $sid, date: $date, cost: $cost, api_ms: $api_ms, timestamp: $ts}]
                     end
                 ' "$PERIOD_FILE" > "$TMP" 2>/dev/null \
                     && mv "$TMP" "$PERIOD_FILE"
@@ -66,6 +67,8 @@ fi
 # Daily/weekly: archive sum EXCLUDING this session (avoid double-count with live cost)
 daily_archived=0
 weekly_archived=0
+daily_archived_ms=0
+weekly_archived_ms=0
 if [ -f "$PERIOD_FILE" ]; then
     daily_archived=$($JQ -r --arg today "$today" --arg sid "$session_id" \
         '[.[] | select(.date == $today and .session_id != $sid)] | map(.cost) | add // 0' \
@@ -73,10 +76,18 @@ if [ -f "$PERIOD_FILE" ]; then
     weekly_archived=$($JQ -r --arg since "$week_ago" --arg sid "$session_id" \
         '[.[] | select(.date >= $since and .session_id != $sid)] | map(.cost) | add // 0' \
         "$PERIOD_FILE" 2>/dev/null || echo 0)
+    daily_archived_ms=$($JQ -r --arg today "$today" --arg sid "$session_id" \
+        '[.[] | select(.date == $today and .session_id != $sid)] | map(.api_ms // 0) | add // 0' \
+        "$PERIOD_FILE" 2>/dev/null || echo 0)
+    weekly_archived_ms=$($JQ -r --arg since "$week_ago" --arg sid "$session_id" \
+        '[.[] | select(.date >= $since and .session_id != $sid)] | map(.api_ms // 0) | add // 0' \
+        "$PERIOD_FILE" 2>/dev/null || echo 0)
 fi
 
 daily_cost=$(echo "${daily_archived:-0} ${cost:-0}" | awk '{printf "%.2f", $1 + $2}')
 weekly_cost=$(echo "${weekly_archived:-0} ${cost:-0}" | awk '{printf "%.2f", $1 + $2}')
+daily_api_ms=$(( ${daily_archived_ms:-0} + ${api_ms:-0} ))
+weekly_api_ms=$(( ${weekly_archived_ms:-0} + ${api_ms:-0} ))
 
 # Rolling-window reset countdowns — from rate_limits fields in statusline JSON
 fmt_countdown() {
@@ -159,24 +170,28 @@ if [ -n "$rl_resets_7d" ] && [ "$rl_resets_7d" != "null" ]; then
     fi
 fi
 
-# Compute time: total time the API was actively generating, not wall-clock.
-api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
-compute_str=""
-if [ "$api_ms" -gt 0 ] 2>/dev/null; then
-    api_secs=$(( api_ms / 1000 ))
-    hrs=$(( api_secs / 3600 ))
-    mins=$(( (api_secs % 3600) / 60 ))
-    secs=$(( api_secs % 60 ))
+# Format API compute time in ms to a human-readable string (space-prefixed).
+fmt_ms() {
+    ms=$1
+    [ "${ms:-0}" -le 0 ] 2>/dev/null && return
+    secs=$(( ms / 1000 ))
+    hrs=$(( secs / 3600 ))
+    mins=$(( (secs % 3600) / 60 ))
+    s=$(( secs % 60 ))
     if [ "$hrs" -ge 1 ]; then
-        compute_str=" ${hrs}h${mins}m"
+        printf " %dh%dm" "$hrs" "$mins"
     elif [ "$mins" -ge 1 ]; then
-        compute_str=" ${mins}m${secs}s"
+        printf " %dm%ds" "$mins" "$s"
     else
-        compute_str=" ${secs}s"
+        printf " %ds" "$s"
     fi
-fi
+}
 
-cost_str=" | ✨ \$${session_cost}${compute_str} | 🌅 \$${daily_cost} | 🗓️ \$${weekly_cost}${window_str} |"
+session_time=$(fmt_ms "$api_ms")
+daily_time=$(fmt_ms "$daily_api_ms")
+weekly_time=$(fmt_ms "$weekly_api_ms")
+
+cost_str=" | ✨ \$${session_cost}${session_time} | 🌅 \$${daily_cost}${daily_time} | 🗓️ \$${weekly_cost}${weekly_time}${window_str} |"
 
 fmt_tokens() {
     echo "$1" | awk '{
@@ -217,14 +232,14 @@ effort=$($JQ -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/nul
 model_str=""
 if [ -n "$model_name" ]; then
     if [ -n "$effort" ]; then
-        model_str="$model_name ($effort) | "
+        model_str="$model_name ($effort)"
     else
-        model_str="$model_name | "
+        model_str="$model_name"
     fi
 fi
 
 if [ -n "$ctx_str" ]; then
-    printf "%s%s%s" "$model_str" "$ctx_str" "$cost_str"
+    printf "%s\n%s%s" "$model_str" "$ctx_str" "$cost_str"
 else
-    printf "%s%s" "$model_str" "${cost_str# | }"
+    printf "%s\n%s" "$model_str" "${cost_str# | }"
 fi
