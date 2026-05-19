@@ -18,41 +18,18 @@ cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
 api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
 
 # cost.total_cost_usd is process-cumulative, not session-scoped: /clear assigns a new
-# session_id but the same CLI process keeps adding to the counter, and --resume
-# restarts the counter at 0 even though prior turns of that session already cost real
-# money. Translate the raw counter into "what this session has spent" by snapshotting
-# (live_counter - already_archived_for_this_sid) on first sight and subtracting that
-# baseline. After this block, $cost and $api_ms always represent the true session
-# total (including any pre-resume spend), so the daily/weekly math below stays simple.
+# session_id but the same CLI process keeps adding to the counter. Without an
+# adjustment, the post-/clear session would report the prior session's spend on top
+# of its own and double-count it in the archive. Snapshot the live counter on first
+# sight of each session_id and subtract it so $cost/$api_ms below represent this
+# process's contribution to the session. The baseline file is never rewritten — the
+# stop hook deletes it at session end, so a leaked file is the worst-case price of
+# not chasing edge-case resets here, vs. the much worse failure mode of a bad reset
+# producing a negative baseline that inflates every subsequent render.
 if [ -n "$session_id" ]; then
     BASELINE_FILE="$HOME/.claude/.baseline-${session_id}"
-    needs_write=0
     if [ ! -f "$BASELINE_FILE" ]; then
-        needs_write=1
-    else
-        # Live cost dropping below the stored baseline means the CLI process restarted
-        # without a stop hook (or the baseline file leaked); recapture from scratch.
-        prior_base=$(awk '{print $1}' "$BASELINE_FILE" 2>/dev/null)
-        decreased=$(awk -v c="${cost:-0}" -v p="${prior_base:-0}" 'BEGIN { print (c+0 < p+0) ? 1 : 0 }')
-        [ "$decreased" = "1" ] && needs_write=1
-    fi
-    if [ "$needs_write" = "1" ]; then
-        # baseline = live - archived. Then adjusted = live - baseline = archived at
-        # first sight (so resumed sessions don't lose prior spend), growing with live
-        # for /clear (where archived == 0 for the brand-new sid).
-        archived_cost=0
-        archived_api_ms=0
-        if [ -f "$PERIOD_FILE" ]; then
-            archived_cost=$($JQ -r --arg sid "$session_id" \
-                '[.[] | select(.session_id == $sid)] | map(.cost) | add // 0' \
-                "$PERIOD_FILE" 2>/dev/null || echo 0)
-            archived_api_ms=$($JQ -r --arg sid "$session_id" \
-                '[.[] | select(.session_id == $sid)] | map(.api_ms // 0) | add // 0' \
-                "$PERIOD_FILE" 2>/dev/null || echo 0)
-        fi
-        base_cost=$(awk -v c="${cost:-0}" -v a="${archived_cost:-0}" 'BEGIN { printf "%.10f", c - a }')
-        base_api_ms=$(( ${api_ms:-0} - ${archived_api_ms:-0} ))
-        printf '%s %s\n' "$base_cost" "$base_api_ms" > "$BASELINE_FILE"
+        printf '%s %s\n' "${cost:-0}" "${api_ms:-0}" > "$BASELINE_FILE"
     fi
     read base_cost base_api_ms < "$BASELINE_FILE"
     cost=$(awk -v c="${cost:-0}" -v b="${base_cost:-0}" 'BEGIN { v=c-b; if (v<0) v=0; printf "%.10f", v }')
