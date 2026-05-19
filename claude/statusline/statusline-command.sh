@@ -14,8 +14,8 @@ total_output=$(echo "$input" | $JQ -r '.context_window.total_output_tokens // 0'
 ctx_size=$(echo "$input" | $JQ -r '.context_window.context_window_size // 0')
 total_tokens=$((total_input + total_output))
 
-cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
-api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
+raw_cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
+raw_api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // empty')
 
 # cost.total_cost_usd is process-cumulative, not session-scoped: /clear assigns a new
 # session_id but the same CLI process keeps adding to the counter. Without an
@@ -26,15 +26,29 @@ api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
 # stop hook deletes it at session end, so a leaked file is the worst-case price of
 # not chasing edge-case resets here, vs. the much worse failure mode of a bad reset
 # producing a negative baseline that inflates every subsequent render.
+#
+# Some renders (notably post-turn) arrive without .cost at all. Treating that as 0
+# would zero out session_cost AND erase this session's contribution from daily/weekly
+# (which exclude the current session from the archive sum and add live cost back).
+# In that case, fall back to whatever this session last flushed to period-costs.json.
+cost=0
+api_ms=0
 if [ -n "$session_id" ]; then
     BASELINE_FILE="$HOME/.claude/.baseline-${session_id}"
-    if [ ! -f "$BASELINE_FILE" ]; then
-        printf '%s %s\n' "${cost:-0}" "${api_ms:-0}" > "$BASELINE_FILE"
+    if [ -n "$raw_cost" ]; then
+        if [ ! -f "$BASELINE_FILE" ]; then
+            printf '%s %s\n' "$raw_cost" "${raw_api_ms:-0}" > "$BASELINE_FILE"
+        fi
+        read base_cost base_api_ms < "$BASELINE_FILE"
+        cost=$(awk -v c="$raw_cost" -v b="${base_cost:-0}" 'BEGIN { v=c-b; if (v<0) v=0; printf "%.10f", v }')
+        api_ms=$(( ${raw_api_ms:-0} - ${base_api_ms:-0} ))
+        [ "$api_ms" -lt 0 ] && api_ms=0
+    elif [ -f "$PERIOD_FILE" ]; then
+        cost=$($JQ -r --arg sid "$session_id" 'map(select(.session_id == $sid)) | .[0].cost // 0' "$PERIOD_FILE" 2>/dev/null)
+        api_ms=$($JQ -r --arg sid "$session_id" 'map(select(.session_id == $sid)) | .[0].api_ms // 0' "$PERIOD_FILE" 2>/dev/null)
+        cost=${cost:-0}
+        api_ms=${api_ms:-0}
     fi
-    read base_cost base_api_ms < "$BASELINE_FILE"
-    cost=$(awk -v c="${cost:-0}" -v b="${base_cost:-0}" 'BEGIN { v=c-b; if (v<0) v=0; printf "%.10f", v }')
-    api_ms=$(( ${api_ms:-0} - ${base_api_ms:-0} ))
-    [ "$api_ms" -lt 0 ] && api_ms=0
 fi
 
 # Session cost (live, 2 decimal places)
