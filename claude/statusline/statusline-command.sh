@@ -333,8 +333,7 @@ if [ -n "$current_dir" ] && GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-pars
     fi
 fi
 
-top_line="$model_str"
-[ -n "$fs_str" ]  && top_line="$top_line  $fs_str"
+top_line="${fs_str}${model_str}"
 [ -n "$git_str" ] && top_line="$top_line  $git_str"
 
 if [ -n "$ctx_str" ]; then
