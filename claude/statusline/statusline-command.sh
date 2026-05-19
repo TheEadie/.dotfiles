@@ -271,7 +271,10 @@ if [ -n "$used_pct" ] && [ "$ctx_size" -gt 0 ] 2>/dev/null; then
 elif [ -n "$used_pct" ]; then
     ctx_str="🧠 $(printf "%.0f" "$used_pct")%"
 else
-    ctx_str=""
+    # Placeholder while context data isn't yet available — same shape as the
+    # populated form so the cost section doesn't jump on the first real tick.
+    empty_bar=$(printf '\033[90m──────────\033[0m')
+    ctx_str="🧠 [${empty_bar}] ?/?"
 fi
 
 effort=$($JQ -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null)
@@ -346,8 +349,4 @@ fi
 top_line="${fs_str}${model_str}"
 [ -n "$git_str" ] && top_line="$top_line  $git_str"
 
-if [ -n "$ctx_str" ]; then
-    printf "%s\n%s  %s" "$top_line" "$ctx_str" "$cost_str"
-else
-    printf "%s\n%s" "$top_line" "$cost_str"
-fi
+printf "%s\n%s  %s" "$top_line" "$ctx_str" "$cost_str"
