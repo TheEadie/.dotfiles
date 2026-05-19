@@ -302,7 +302,7 @@ if [ -n "$current_dir" ] && GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-pars
               || GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-parse --short HEAD 2>/dev/null \
               || echo detached)
     fi
-    git_str=$(printf '🌿 \033[1;35m%s\033[0m' "$branch")
+    git_str=$(printf '\033[1;35m⎇  %s\033[0m' "$branch")
 
     porcelain=$(GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" status --porcelain 2>/dev/null)
     if [ -n "$porcelain" ]; then
