@@ -159,7 +159,24 @@ if [ -n "$rl_resets_7d" ] && [ "$rl_resets_7d" != "null" ]; then
     fi
 fi
 
-cost_str=" | S: \$${session_cost} | D: \$${daily_cost} | W: \$${weekly_cost}${window_str} |"
+# Compute time: total time the API was actively generating, not wall-clock.
+api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
+compute_str=""
+if [ "$api_ms" -gt 0 ] 2>/dev/null; then
+    api_secs=$(( api_ms / 1000 ))
+    hrs=$(( api_secs / 3600 ))
+    mins=$(( (api_secs % 3600) / 60 ))
+    secs=$(( api_secs % 60 ))
+    if [ "$hrs" -ge 1 ]; then
+        compute_str=" ${hrs}h${mins}m"
+    elif [ "$mins" -ge 1 ]; then
+        compute_str=" ${mins}m${secs}s"
+    else
+        compute_str=" ${secs}s"
+    fi
+fi
+
+cost_str=" | ✨ \$${session_cost}${compute_str} | 🌅 \$${daily_cost} | 🗓️ \$${weekly_cost}${window_str} |"
 
 fmt_tokens() {
     echo "$1" | awk '{
