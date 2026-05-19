@@ -68,5 +68,8 @@ TMP="${PERIOD_FILE}.tmp.$$"
     rm -f "$TMP"
 ) 9>"${PERIOD_FILE}.lock"
 
+# Clean up the statusline's per-session baseline and flush marker
+rm -f "$HOME/.claude/.baseline-${session_id}" "$HOME/.claude/.flush-${session_id}"
+
 # Clean up any temp files from the old approach
 rm -f "/tmp/claude-costs/current-${session_id}"

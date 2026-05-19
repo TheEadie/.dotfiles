@@ -17,6 +17,49 @@ total_tokens=$((total_input + total_output))
 cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
 api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // 0')
 
+# cost.total_cost_usd is process-cumulative, not session-scoped: /clear assigns a new
+# session_id but the same CLI process keeps adding to the counter, and --resume
+# restarts the counter at 0 even though prior turns of that session already cost real
+# money. Translate the raw counter into "what this session has spent" by snapshotting
+# (live_counter - already_archived_for_this_sid) on first sight and subtracting that
+# baseline. After this block, $cost and $api_ms always represent the true session
+# total (including any pre-resume spend), so the daily/weekly math below stays simple.
+if [ -n "$session_id" ]; then
+    BASELINE_FILE="$HOME/.claude/.baseline-${session_id}"
+    needs_write=0
+    if [ ! -f "$BASELINE_FILE" ]; then
+        needs_write=1
+    else
+        # Live cost dropping below the stored baseline means the CLI process restarted
+        # without a stop hook (or the baseline file leaked); recapture from scratch.
+        prior_base=$(awk '{print $1}' "$BASELINE_FILE" 2>/dev/null)
+        decreased=$(awk -v c="${cost:-0}" -v p="${prior_base:-0}" 'BEGIN { print (c+0 < p+0) ? 1 : 0 }')
+        [ "$decreased" = "1" ] && needs_write=1
+    fi
+    if [ "$needs_write" = "1" ]; then
+        # baseline = live - archived. Then adjusted = live - baseline = archived at
+        # first sight (so resumed sessions don't lose prior spend), growing with live
+        # for /clear (where archived == 0 for the brand-new sid).
+        archived_cost=0
+        archived_api_ms=0
+        if [ -f "$PERIOD_FILE" ]; then
+            archived_cost=$($JQ -r --arg sid "$session_id" \
+                '[.[] | select(.session_id == $sid)] | map(.cost) | add // 0' \
+                "$PERIOD_FILE" 2>/dev/null || echo 0)
+            archived_api_ms=$($JQ -r --arg sid "$session_id" \
+                '[.[] | select(.session_id == $sid)] | map(.api_ms // 0) | add // 0' \
+                "$PERIOD_FILE" 2>/dev/null || echo 0)
+        fi
+        base_cost=$(awk -v c="${cost:-0}" -v a="${archived_cost:-0}" 'BEGIN { printf "%.10f", c - a }')
+        base_api_ms=$(( ${api_ms:-0} - ${archived_api_ms:-0} ))
+        printf '%s %s\n' "$base_cost" "$base_api_ms" > "$BASELINE_FILE"
+    fi
+    read base_cost base_api_ms < "$BASELINE_FILE"
+    cost=$(awk -v c="${cost:-0}" -v b="${base_cost:-0}" 'BEGIN { v=c-b; if (v<0) v=0; printf "%.10f", v }')
+    api_ms=$(( ${api_ms:-0} - ${base_api_ms:-0} ))
+    [ "$api_ms" -lt 0 ] && api_ms=0
+fi
+
 # Session cost (live, 2 decimal places)
 session_cost=$(echo "${cost:-0}" | awk '{printf "%.2f", $1}')
 
