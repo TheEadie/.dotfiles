@@ -3,7 +3,7 @@ description: Orchestrate planning, implementation, an automated review-fix loop,
 effort: medium
 ---
 
-You coordinate the full slice workflow: plan → implement → (review ↔ fix)* → resolve. The plan and implement phases run in their own sub-agents (`slice-planner-wip`, `slice-implementer-wip`). The review-fix loop dispatches `reviewer-spec-wip`, `reviewer-csharp-wip`, and `reviewer-react-wip` in parallel, merges their findings inline, then alternates with `slice-fixer-wip` until the slice converges — no Blockers and no Accept-recommended Suggestions remain — or a hard cap is hit. The resolution phase then runs interactively in this session for whatever's left (Nitpicks, Declines, and any auto-fixable findings the cap cut off). Each sub-agent's frontmatter pins the model it runs on.
+You coordinate the full slice workflow: plan → implement → (review ↔ fix)* → resolve. The plan and implement phases run in their own sub-agents (`slice-planner-wip`, `slice-implementer-wip`). The review-fix loop dispatches `reviewer-spec-wip`, `reviewer-security-wip`, `reviewer-csharp-wip`, and `reviewer-react-wip` in parallel, merges their findings inline, then alternates with `slice-fixer-wip` until the slice converges — no Blockers and no Accept-recommended Suggestions remain — or a hard cap is hit. The resolution phase then runs interactively in this session for whatever's left (Nitpicks, Declines, and any auto-fixable findings the cap cut off). Each sub-agent's frontmatter pins the model it runs on.
 
 ## Sticky comment operations
 
@@ -95,17 +95,24 @@ Classify the results:
 
 Identify which component(s) the C# files belong to by the project directory names they sit under (e.g. a file under `src/Foo.Bar/` belongs to the `Foo.Bar` component). Check `CLAUDE.md` for a component-to-doc mapping.
 
-Record the base branch, current branch, C# file list, web file list, and component list — reuse these in every review iteration without re-running the diff.
+Also classify every touched file by **security risk** for the security reviewer:
+
+- **CRITICAL** — auth / session / token code, password handling, crypto, deserialization entry points, anything that runs as a privileged process.
+- **HIGH** — request handlers / controllers / API routes, database access layers, file I/O with user-controlled paths, outbound HTTP from server code, redirect endpoints, template rendering with user data, dependency manifests (`*.csproj`, `package.json`, `package-lock.json`, `requirements.txt`, etc.).
+- **MEDIUM/LOW** — everything else.
+
+Record the base branch, current branch, C# file list, web file list, component list, and the security-classified file list (CRITICAL/HIGH only — the security reviewer will lightly scan the rest itself) — reuse these in every review iteration without re-running the diff.
 
 ### Iteration 1 — initial review
 
 Dispatch reviewer sub-agents in a **single message** (parallel):
 
 1. **Always** spawn `reviewer-spec-wip` (via the Agent tool with `subagent_type: "reviewer-spec-wip"`) with: the GitHub issue URL, the base branch, and the current branch.
-2. **If any C# files changed**, spawn `reviewer-csharp-wip` (via the Agent tool with `subagent_type: "reviewer-csharp-wip"`) with: the base branch, the current branch, the C# file list, and the component(s).
-3. **If any web files changed**, spawn `reviewer-react-wip` (via the Agent tool with `subagent_type: "reviewer-react-wip"`) with: the base branch, the current branch, the web file list, and the web project directory.
+2. **Always** spawn `reviewer-security-wip` (via the Agent tool with `subagent_type: "reviewer-security-wip"`) with: the base branch, the current branch, and the security-classified file list (CRITICAL/HIGH).
+3. **If any C# files changed**, spawn `reviewer-csharp-wip` (via the Agent tool with `subagent_type: "reviewer-csharp-wip"`) with: the base branch, the current branch, the C# file list, and the component(s).
+4. **If any web files changed**, spawn `reviewer-react-wip` (via the Agent tool with `subagent_type: "reviewer-react-wip"`) with: the base branch, the current branch, the web file list, and the web project directory.
 
-After all sub-agents have returned, merge their findings into the `review` sticky comment using the template below. Preserve each sub-agent's findings verbatim within its section — do not rerank across axes. Renumber findings only if needed to keep IDs unique (e.g. `Spec B1`, `C# B1`, `Web B1` are fine as-is). Write a one-paragraph verdict that summarises both axes honestly: a Spec-pass / Standards-fail reads differently from the reverse.
+After all sub-agents have returned, merge their findings into the `review` sticky comment using the template below. Preserve each sub-agent's findings verbatim within its section — do not rerank across axes. Renumber findings only if needed to keep IDs unique (e.g. `Spec B1`, `Security B1`, `C# B1`, `Web B1` are fine as-is). Write a one-paragraph verdict that summarises all axes honestly: a Spec-pass / Security-fail reads very differently from a Spec-fail / Security-pass.
 
 Render the merged review to `/tmp/sticky-review.md` with `<!-- claude:sticky:review -->` as the first line, then create or update the `review` sticky comment using the write flow above.
 
@@ -129,6 +136,10 @@ _Generated by Claude Code._
 
 [Verbatim from reviewer-spec-wip: Acceptance Criteria table, Blockers, Suggestions, Nitpicks. If a sub-section is empty, write "None".]
 
+## Security
+
+[Verbatim from reviewer-security-wip, including the Summary PASS/FAIL line. If a sub-section is empty, write "None".]
+
 ## C# Standards
 
 [Verbatim from reviewer-csharp-wip, including the build PASS/FAIL line. Omit this whole section if reviewer-csharp-wip was not dispatched.]
@@ -142,6 +153,7 @@ _Generated by Claude Code._
 [For every finding across all axes, state your recommended action and a one-line reason. Reference findings by axis-prefixed ID:]
 
 - **Spec B1** — Accept — [reason]
+- **Security B1** — Accept — [reason]
 - **C# B1** — Accept — [reason]
 - **C# S1** — Decline — [reason]
 - **Web N1** — Accept — [reason]
@@ -162,7 +174,7 @@ Repeat the following until either the auto-fixable list is empty or you have com
 3. If the auto-fixable list is **empty**, exit the loop and proceed to Step 5.
 4. If you have already completed **3 review iterations** in total, exit the loop and proceed to Step 5 — note in your hand-off that the cap was hit so the user knows there may still be auto-fixable items left.
 5. Dispatch the `slice-fixer-wip` agent (via the Agent tool with `subagent_type: "slice-fixer-wip"`), passing the issue URL/number `<issue>` plus the auto-fixable findings list. Each item should include its ID, severity, file:line, the issue, and the proposed fix — copied verbatim from the relevant section of the `review` sticky comment so `slice-fixer-wip` doesn't have to re-parse it.
-6. After `slice-fixer-wip` returns, dispatch the same reviewer sub-agents in parallel (using the recorded base branch, current branch, file lists, and component list) to produce a fresh review against the updated code. Merge their outputs and update the `review` sticky comment using the same template. This is the next review iteration — increment your counter. Verify the `review` sticky comment has been updated.
+6. After `slice-fixer-wip` returns, dispatch the same reviewer sub-agents in parallel (using the recorded base branch, current branch, file lists, component list, and security-classified file list) to produce a fresh review against the updated code. Merge their outputs and update the `review` sticky comment using the same template. This is the next review iteration — increment your counter. Verify the `review` sticky comment has been updated.
 7. Go back to step 1.
 
 Briefly tell the user when each iteration begins and ends, including which findings went to `slice-fixer-wip` and what `slice-fixer-wip` reported back (Fixed / Deviated / Skipped). Do not surface the full review body — the user can read the sticky if they want detail.
