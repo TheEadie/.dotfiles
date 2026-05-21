@@ -14,6 +14,7 @@ rm ~/.tmux.conf
 rm ~/.vimrc
 rm -rf ~/.claude/skills
 rm -rf ~/.claude/commands
+rm -rf ~/.claude/agents
 
 # Install Dracula VIM theme
 mkdir -p ~/.vim/pack/themes/start
@@ -38,6 +39,7 @@ ln -sv ~/.dotfiles/claude/skills ~/.claude/skills
 ln -sv ~/.dotfiles/claude/hooks ~/.claude/hooks
 ln -sv ~/.dotfiles/claude/statusline ~/.claude/statusline
 ln -sv ~/.dotfiles/claude/commands ~/.claude/commands
+ln -sv ~/.dotfiles/claude/agents ~/.claude/agents
 
 # Restart Shell
 exec fish
