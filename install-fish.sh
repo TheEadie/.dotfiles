@@ -13,6 +13,7 @@ rm ~/.config/starship.toml
 rm ~/.tmux.conf
 rm ~/.vimrc
 rm -rf ~/.claude/skills
+rm -rf ~/.claude/commands
 
 # Install Dracula VIM theme
 mkdir -p ~/.vim/pack/themes/start
@@ -36,6 +37,7 @@ ln -sv ~/.dotfiles/vim/.vimrc ~
 ln -sv ~/.dotfiles/claude/skills ~/.claude/skills
 ln -sv ~/.dotfiles/claude/hooks ~/.claude/hooks
 ln -sv ~/.dotfiles/claude/statusline ~/.claude/statusline
+ln -sv ~/.dotfiles/claude/commands ~/.claude/commands
 
 # Restart Shell
 exec fish
