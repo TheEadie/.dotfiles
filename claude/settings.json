@@ -68,8 +68,7 @@
   },
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true,
-    "csharp-lsp@claude-plugins-official": true,
-    "review-pr@redgate-skills": true
+    "csharp-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "redgate-skills": {
@@ -83,9 +82,6 @@
     "enabled": true,
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
-    "excludedCommands": [
-      "git *"
-    ],
     "network": {
       "allowedDomains": [
         "github.com",
@@ -105,14 +101,17 @@
       "allowRead": [
         "~/.ssh/known_hosts"
       ]
-    }
+    },
+    "excludedCommands": [
+      "git *"
+    ]
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
-  "voiceEnabled": true,
-  "tui": "fullscreen"
+  "voiceEnabled": true
 }
