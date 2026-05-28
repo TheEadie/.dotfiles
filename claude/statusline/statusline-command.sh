@@ -373,7 +373,7 @@ if [ -n "$current_dir" ]; then
         "$HOME") dir_name="~" ;;
         *)       dir_name=$(basename "$current_dir") ;;
     esac
-    dir_str=$(printf '\033[1;36m📁 %s\033[0m' "$dir_name")
+    dir_str="📁 $dir_name"
 fi
 
 top_line="${fs_str}${model_str}"
