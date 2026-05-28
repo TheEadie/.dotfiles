@@ -34,7 +34,7 @@ alias kn="kubens"
 alias d="docker"
 alias rc="rgclone"
 
-alias c="claude --dangerously-skip-permissions"
+alias c="claude"
 
 alias gs="git status"
 alias gd="git diff"
