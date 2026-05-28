@@ -18,7 +18,9 @@ raw_cost=$(echo "$input" | $JQ -r '.cost.total_cost_usd // empty')
 raw_api_ms=$(echo "$input" | $JQ -r '.cost.total_api_duration_ms // empty')
 
 today=$(date +%Y-%m-%d)
-week_ago=$(date -d "7 days ago" +%Y-%m-%d)
+# Sunday-anchored week start: date +%w gives 0 for Sunday, 1 for Monday, etc.,
+# so "N days ago" lands on the most recent Sunday (or today if it is Sunday).
+week_start=$(date -d "$(date +%w) days ago" +%Y-%m-%d)
 now_s=$(date +%s)
 now_ns=$(date +%s%N)
 
@@ -121,14 +123,15 @@ fi
 # Best-effort prune of records older than 8 days (frees finished processes).
 find "$PROC_DIR" -maxdepth 1 -type f -name '*.json' -mtime +8 -delete 2>/dev/null
 
-# Sum cost and api_ms across all per-process files for today and the past week.
+# Sum cost and api_ms across all per-process files for today and the current
+# Sunday-anchored week.
 daily_cost=0
 weekly_cost=0
 daily_api_ms=0
 weekly_api_ms=0
 set -- "$PROC_DIR"/*.json
 if [ -e "$1" ]; then
-    sums=$($JQ -s -r --arg today "$today" --arg since "$week_ago" '
+    sums=$($JQ -s -r --arg today "$today" --arg since "$week_start" '
         {
           dc: ([.[] | select(.date == $today) | .cost // 0] | add // 0),
           wc: ([.[] | select(.date >= $since) | .cost // 0] | add // 0),
