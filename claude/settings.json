@@ -92,7 +92,7 @@
     },
     "filesystem": {
       "allowWrite": [
-        "/tmp/build",
+        "/tmp",
         "/run/user/1000/ssh-agent.socket"
       ],
       "denyRead": [
