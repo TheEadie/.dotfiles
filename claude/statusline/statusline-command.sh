@@ -367,7 +367,17 @@ if [ -n "$current_dir" ] && GIT_OPTIONAL_LOCKS=0 $GIT_CMD -C "$git_dir" rev-pars
     fi
 fi
 
+dir_str=""
+if [ -n "$current_dir" ]; then
+    case "$current_dir" in
+        "$HOME") dir_name="~" ;;
+        *)       dir_name=$(basename "$current_dir") ;;
+    esac
+    dir_str=$(printf '\033[1;36m📁 %s\033[0m' "$dir_name")
+fi
+
 top_line="${fs_str}${model_str}"
+[ -n "$dir_str" ] && top_line="$top_line  $dir_str"
 [ -n "$git_str" ] && top_line="$top_line  $git_str"
 
 printf "%s\n%s  %s" "$top_line" "$ctx_str" "$cost_str"
