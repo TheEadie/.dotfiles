@@ -15,6 +15,7 @@ rm ~/.vimrc
 rm -rf ~/.claude/skills
 rm -rf ~/.claude/commands
 rm -rf ~/.claude/agents
+rm -rf ~/.claude/scripts
 rm -f ~/.claude/settings.json
 
 # Install Dracula VIM theme
@@ -41,6 +42,7 @@ ln -sv ~/.dotfiles/claude/hooks ~/.claude/hooks
 ln -sv ~/.dotfiles/claude/statusline ~/.claude/statusline
 ln -sv ~/.dotfiles/claude/commands ~/.claude/commands
 ln -sv ~/.dotfiles/claude/agents ~/.claude/agents
+ln -sv ~/.dotfiles/claude/scripts ~/.claude/scripts
 ln -sv ~/.dotfiles/claude/settings.json ~/.claude/settings.json
 
 # Restart Shell

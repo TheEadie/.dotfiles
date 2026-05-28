@@ -22,12 +22,12 @@ The orchestrator will tell you:
 
 ## Sticky comment operations
 
-**Read a sticky:**
+**Read a sticky** with the `gh-sticky` helper (single approved command — do not chain `gh api` calls inline):
 ```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-gh api "repos/$REPO/issues/<number>/comments" --paginate \
-  --jq '.[] | select(.body | startswith("<!-- claude:sticky:<name> -->")) | {id, body}'
+~/.claude/scripts/gh-sticky get <number> <name>
 ```
+
+Prints `{id, body, url}` JSON, or `null` if none. Variants: `get-id`, `get-body` (prints body to stdout), and `save <number> <name> <file>` (writes body to file).
 
 **Fetch parent epic and sibling sub-issues:**
 ```bash

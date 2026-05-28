@@ -16,7 +16,8 @@
       "Bash(dotnet *)",
       "Bash(npm *)",
       "Bash(yarn *)",
-      "Bash(gh *)"
+      "Bash(gh *)",
+      "Bash(~/.claude/scripts/gh-sticky *)"
     ],
     "deny": [
       "Read(./.env)",

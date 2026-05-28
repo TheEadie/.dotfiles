@@ -107,28 +107,13 @@ Render the spec using the template below to `/tmp/spec-body.md`. The first line 
 
 Followed by a blank line, then the rendered markdown.
 
-Then create or update the sticky comment on the issue:
+Then create or update the sticky comment on the issue with the `gh-sticky` helper (it handles the look-up-then-PATCH-or-create dance in a single approved command — do not chain `gh api` calls manually):
 
-**Look up any existing spec comment:**
 ```bash
-gh api "repos/{owner}/{repo}/issues/<number>/comments" --paginate \
-  --jq '.[] | select(.body | startswith("<!-- claude:sticky:spec -->")) | {id, body, url}'
+~/.claude/scripts/gh-sticky upsert <number> spec /tmp/spec-body.md
 ```
 
-Resolve `{owner}/{repo}` from: `gh repo view --json nameWithOwner -q .nameWithOwner`
-
-**If a comment id was found, update it:**
-```bash
-gh api -X PATCH "repos/{owner}/{repo}/issues/comments/<id>" \
-  -F body=@/tmp/spec-body.md
-```
-
-**If no comment exists, create one:**
-```bash
-gh issue comment <number> --body-file /tmp/spec-body.md
-```
-
-Always pass the body via `--body-file` / `-F body=@…`, never inline. Confirm the edit succeeded and capture the issue URL for Step 6.
+The helper refuses to write if the body file's first line isn't the sticky marker, so always pass the body via the temp file — never construct comment text inline. Capture the issue URL for Step 6.
 
 ### Spec body template
 

@@ -12,11 +12,13 @@ YOU DO NOT IMPLEMENT THE SLICE. Only write the `plan` sticky comment.
 
 Sticky comments are GitHub issue comments identified by a hidden HTML-comment marker on the first line: `<!-- claude:sticky:<name> -->`. Subsequent runs find and update the existing comment by marker.
 
+Use the `gh-sticky` helper for every sticky operation — it wraps the lookup-then-PATCH-or-create dance in a single approved command so the sandbox doesn't prompt on each invocation. Do not chain `gh api` calls inline.
+
 **Write (create-or-update) a sticky:**
 1. Render the full body to `/tmp/sticky-<name>.md` with the marker as the first line.
-2. Look up any existing comment: `REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner) && gh api "repos/$REPO/issues/<number>/comments" --paginate --jq '.[] | select(.body | startswith("<!-- claude:sticky:<name> -->")) | {id}'`
-3. If found: `gh api -X PATCH "repos/$REPO/issues/comments/<id>" -F body=@/tmp/sticky-<name>.md`
-4. Otherwise: `gh issue comment <number> --body-file /tmp/sticky-<name>.md`
+2. Run `~/.claude/scripts/gh-sticky upsert <number> <name> /tmp/sticky-<name>.md`.
+
+The helper refuses to write if the body file's first line isn't the matching marker.
 
 **Fetch parent epic and sibling sub-issues:**
 ```bash
@@ -35,12 +37,12 @@ gh api graphql -f query='
   }' -f owner="$OWNER" -f repo="$NAME" -F number=<slice-issue-number>
 ```
 
-**Read a sticky:**
+**Read a sticky** (prints `{id, body, url}` JSON, or `null` if none):
 ```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-gh api "repos/$REPO/issues/<number>/comments" --paginate \
-  --jq '.[] | select(.body | startswith("<!-- claude:sticky:<name> -->")) | {id, body}'
+~/.claude/scripts/gh-sticky get <number> <name>
 ```
+
+There are also `get-id`, `get-body` (prints body to stdout), and `save <number> <name> <file>` (writes body to file) for narrower needs.
 
 ## Step 1 — Identify the slice issue
 

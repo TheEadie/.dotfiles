@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# gh-sticky — manage sticky comments on GitHub issues.
+#
+# A sticky comment is identified by a hidden HTML-comment marker on the first
+# line of the comment body: `<!-- claude:sticky:<name> -->`. Subsequent runs
+# locate the existing comment by marker and update it in place.
+#
+# Usage:
+#   gh-sticky get <issue> <name>            Print {id, body, url} JSON, or "null"
+#   gh-sticky get-id <issue> <name>         Print numeric id, or empty
+#   gh-sticky get-body <issue> <name>       Print body to stdout, or empty
+#   gh-sticky save <issue> <name> <file>    Write body to <file>, or empty file
+#   gh-sticky upsert <issue> <name> <file>  Create or update; <file>'s first
+#                                            line must be the sticky marker.
+
+set -euo pipefail
+
+cmd=${1:-}
+issue=${2:-}
+name=${3:-}
+
+usage() {
+  sed -n '3,15p' "$0" >&2
+  exit 64
+}
+
+[[ -n "$cmd" && -n "$issue" && -n "$name" ]] || usage
+
+marker="<!-- claude:sticky:${name} -->"
+repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
+# Stream matching comments (one JSON object per line) across all pages,
+# then collapse to the first match (or empty).
+fetch_first() {
+  gh api "repos/$repo/issues/$issue/comments" --paginate \
+    --jq ".[] | select(.body | startswith(\"$marker\"))" \
+    | jq -s 'first // empty'
+}
+
+case "$cmd" in
+  get)
+    out=$(fetch_first)
+    [[ -n "$out" ]] && printf '%s\n' "$out" || echo "null"
+    ;;
+  get-id)
+    fetch_first | jq -r '.id // empty'
+    ;;
+  get-body)
+    fetch_first | jq -r '.body // empty'
+    ;;
+  save)
+    file=${4:-}
+    [[ -n "$file" ]] || usage
+    fetch_first | jq -r '.body // empty' > "$file"
+    ;;
+  upsert)
+    file=${4:-}
+    [[ -n "$file" && -f "$file" ]] || { echo "missing or unreadable body file" >&2; exit 64; }
+    first_line=$(head -n 1 "$file")
+    if [[ "$first_line" != "$marker" ]]; then
+      echo "first line of $file must be: $marker" >&2
+      exit 65
+    fi
+    id=$(fetch_first | jq -r '.id // empty')
+    if [[ -n "$id" ]]; then
+      gh api -X PATCH "repos/$repo/issues/comments/$id" -F body=@"$file" >/dev/null
+      echo "updated sticky:$name (comment $id)"
+    else
+      gh issue comment "$issue" --body-file "$file"
+    fi
+    ;;
+  *)
+    usage
+    ;;
+esac
