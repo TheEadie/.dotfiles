@@ -82,6 +82,10 @@
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "excludedCommands": [
+      "git *"
+    ],
     "network": {
       "allowedDomains": [
         "github.com",
