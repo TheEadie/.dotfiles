@@ -60,16 +60,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh ~/.claude/hooks/stop-hook.sh"
-          }
-        ]
-      }
     ]
   },
   "statusLine": {
