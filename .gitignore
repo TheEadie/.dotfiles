@@ -1,0 +1,15 @@
+# Claude Code sandbox bind-mount placeholders
+.bash_profile
+.bashrc
+.gitconfig
+.gitmodules
+.idea
+.mcp.json
+.profile
+.ripgreprc
+.vscode
+.zprofile
+.zshrc
+
+# Project-level Claude config (decide per-file what to commit)
+.claude/
