@@ -35,7 +35,7 @@
       "Bash(chmod 777 *)",
       "Bash(curl http://*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "auto"
   },
   "hooks": {
     "PreToolUse": [
