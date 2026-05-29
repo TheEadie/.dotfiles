@@ -53,7 +53,7 @@ Fetch the issue and its `plan` sticky comment (using the read flow above). If th
 Read everything before touching any files:
 
 - The slice's plan — the `plan` sticky comment on the issue. This is the authoritative implementation guide.
-- The slice's spec — the GitHub issue body. These are the acceptance criteria you will verify against at the end.
+- The slice's spec — the `spec` sticky comment on the issue (`~/.claude/scripts/gh-sticky get-body <number> spec`). These are the acceptance criteria you will verify against at the end.
 - `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. Follow its pointers to load the docs for the areas touched.
 - The parent epic issue (if any) and its sibling sub-issues, via the GraphQL query above. For each earlier sibling sub-issue that has a `learnings` sticky, read it — caveats from prior slices may apply here too.
 

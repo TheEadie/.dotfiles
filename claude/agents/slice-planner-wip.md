@@ -48,13 +48,14 @@ There are also `get-id`, `get-body` (prints body to stdout), and `save <number> 
 
 The orchestrator will pass you a GitHub issue reference (URL or `#NNN`). If it is missing, stop and ask. Do not proceed without an explicit issue reference.
 
-Fetch the issue:
+Fetch the issue and its `spec` sticky comment:
 
 ```bash
 gh issue view <number-or-url> --json number,title,body,url
+~/.claude/scripts/gh-sticky get <number> spec
 ```
 
-The issue body is the slice's spec. If the body still looks like the one-sentence stub created by `/epic` (i.e. `/spec` has not been run yet against this issue), stop and tell the user to run `/spec` first.
+If the `spec` sticky does not exist, stop and tell the user to run `/spec` first.
 
 Record the issue number and URL for use in Step 4.
 
@@ -62,7 +63,7 @@ Record the issue number and URL for use in Step 4.
 
 Read everything needed to produce an accurate, codebase-consistent plan:
 
-- The slice issue body — requirements, out of scope, acceptance criteria.
+- The slice's spec — the `spec` sticky comment on the issue (requirements, out of scope, acceptance criteria).
 - The parent epic issue (if any), via the GraphQL query above. If a parent exists, read its body for scope boundaries and the major capabilities this slice contributes to.
 - For each earlier sibling sub-issue in `parent.subIssues.nodes` that is closed (or has a `learnings` sticky), read its `learnings` sticky comment — they capture known caveats from prior implementation.
 - `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. Follow its pointers to load the docs for the areas this slice touches.

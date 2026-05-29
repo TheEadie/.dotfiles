@@ -1,6 +1,6 @@
 ---
 name: reviewer-spec-wip
-description: Reviews a slice diff against its GitHub issue spec (the issue body) and `learnings` sticky comment. Reports missing or partial acceptance criteria, scope creep (changes the spec did not ask for), and asked-for behaviour that looks wrong in the implementation. Use when reviewing a slice for spec drift.
+description: Reviews a slice diff against its GitHub issue spec (the `spec` sticky comment) and `learnings` sticky comment. Reports missing or partial acceptance criteria, scope creep (changes the spec did not ask for), and asked-for behaviour that looks wrong in the implementation. Use when reviewing a slice for spec drift.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
@@ -17,7 +17,7 @@ You do NOT review coding style, build cleanliness, or framework conventions — 
 
 The orchestrator will tell you:
 
-- The GitHub issue URL (or number) for the slice — its body is the spec; its `learnings` sticky comment captures implementer notes.
+- The GitHub issue URL (or number) for the slice — its `spec` sticky comment is the spec; its `learnings` sticky comment captures implementer notes.
 - The base branch and current branch (so you can run the diff yourself).
 
 ## Sticky comment operations
@@ -48,10 +48,10 @@ gh api graphql -f query='
 
 ## Process
 
-1. Fetch the slice's spec from the GitHub issue body:
+1. Fetch the slice's spec from the `spec` sticky comment:
 
    ```bash
-   gh issue view <number-or-url> --json number,title,body,url
+   ~/.claude/scripts/gh-sticky get-body <number> spec
    ```
 
    Read it end to end. Note every acceptance criterion verbatim — these are the only criteria you check.

@@ -48,12 +48,12 @@ Scan the user's request for a GitHub issue reference (a full GitHub issue URL, o
 
 Fetch the issue and inspect its sticky comments (using the operations above) to determine which phases need to run:
 
-- Issue body exists (spec) but no `plan` sticky → planning + implementing + review-fix loop + interactive resolution
+- `spec` sticky exists but no `plan` sticky → planning + implementing + review-fix loop + interactive resolution
 - `plan` sticky exists but no `learnings` sticky → implementing + review-fix loop + interactive resolution
 - `learnings` sticky exists but no `review` sticky → review-fix loop + interactive resolution
-- All three stickies exist → only Step 5 (interactive resolution) runs against the existing `review` sticky
+- All three stickies (`plan`, `learnings`, `review`) exist → only Step 5 (interactive resolution) runs against the existing `review` sticky
 
-If the issue body is empty or still looks like the one-sentence stub created by `/epic`, stop and tell the user to run `/spec` against it first.
+If no `spec` sticky exists AND no `plan` sticky exists, stop and tell the user to run `/spec` against this issue first.
 
 Record the issue URL and number as `<issue>` for use below. Present the planned phase list to the user and ask them to confirm before proceeding.
 
