@@ -25,7 +25,12 @@
       "Read(./secrets/**)",
       "Read(./config/credentials.json)",
       "Bash(rm -rf *)",
-      "Bash(git push --force*)",
+      "Bash(git push --force)",
+      "Bash(git push --force *)",
+      "Bash(git push -f)",
+      "Bash(git push -f *)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
       "Bash(sudo *)",
       "Bash(chmod 777 *)",
       "Bash(curl http://*)"
