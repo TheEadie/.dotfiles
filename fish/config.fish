@@ -5,6 +5,7 @@ eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)
 fish_add_path -P "$HOME/.dotnet"
 fish_add_path -P "$HOME/.dotnet/tools"
 fish_add_path -P "$HOME/.cargo/bin"
+fish_add_path -P "$HOME/.local/bin"
 
 # Only in WSL
 if test -r /proc/version; and string match -q "*microsoft*" (cat /proc/version)
@@ -46,6 +47,4 @@ set -gx RGCLONE_API_ENDPOINT "https://clone-internal.red-gate.com:8132/"
 
 # Start Starship
 starship init fish | source
-
-
 
