@@ -55,7 +55,7 @@ Fetch the issue and inspect its sticky comments (using the operations above) to 
 
 If no `spec` sticky exists AND no `plan` sticky exists, stop and tell the user to run `/spec` against this issue first.
 
-Record the issue URL and number as `<issue>` for use below. Present the planned phase list to the user and ask them to confirm before proceeding.
+Record the issue URL and number as `<issue>` for use below. Proceed immediately without asking the user to confirm.
 
 ## Step 2 — Plan phase
 
@@ -175,39 +175,16 @@ Repeat the following until either the auto-fixable list is empty or you have com
 
 Briefly tell the user when each iteration begins and ends, including which findings went to `slice-fixer-wip` and what `slice-fixer-wip` reported back (Fixed / Deviated / Skipped). Do not surface the full review body — the user can read the sticky if they want detail.
 
-## Step 5 — Resolve remaining findings interactively
+## Step 5 — Report remaining findings
 
-By the time you reach this step, the loop has driven the slice to either zero auto-fixable findings or the iteration cap. Step 5 handles whatever the loop did not auto-resolve: Nitpicks, Declines, and (if the cap was hit) any leftover Accept-recommended Blockers/Suggestions.
-
-Read the latest `review` sticky comment and collect all findings in document order: Blockers (B1, B2, …), then Suggestions (S1, S2, …), then Nitpicks (N1, N2, …). Skip any finding whose `**Decision:**` line is already set to `Accept` or `Decline`.
-
-For each remaining finding, look at the referenced file to make the proposed fix concrete.
-
-Present all findings at once as a single table:
-
-| ID | Severity | Title | File | Issue | Proposed Fix |
-|----|----------|-------|------|-------|--------------|
-| B1 | Blocker | … | `path/to/file:line` | … | … |
-| S1 | Suggestion | … | `path/to/file:line` | … | … |
-| N1 | Nitpick | … | `path/to/file:line` | … | … |
-
-Then ask: **"Reply with the IDs you want resolved (e.g. `B1 S2`), the IDs you want ignored, or `all` to resolve everything. Any ID not mentioned will be skipped."**
-
-Wait for a single reply, then apply all accepted fixes in one batch. After all changes are made, update the `review` sticky comment in place:
-
-- Update each accepted finding's `**Decision:**` line to `Accept`.
-- Update each declined finding's `**Decision:**` line to `Decline`.
-- Leave skipped findings as `*(pending)*`.
-
-To edit in place: read the current body of the `review` sticky comment, apply the line changes, and write the full updated body back to the same comment via the write flow above. Do not append a second `review` sticky.
+By the time you reach this step, the loop has driven the slice to either zero auto-fixable findings or the iteration cap. Proceed directly to Step 6 — do not ask the user to resolve findings interactively.
 
 ## Step 6 — Hand off
 
 Tell the user:
 - How many review iterations ran and whether the loop converged or hit the 3-iteration cap
 - How many findings the loop auto-fixed (and any that `slice-fixer-wip` reported as Deviated or Skipped)
-- How many findings Step 5 resolved, ignored, and skipped
-- Whether any unresolved Blockers remain (they must be addressed before merging)
+- Whether any unresolved Blockers or pending findings remain (visible in the `review` sticky)
 - Next step: run `/pr` to create the pull request
 
 Do not commit, push, or open a PR — the user triggers that.
