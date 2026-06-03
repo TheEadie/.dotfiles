@@ -3,6 +3,9 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "ENABLE_LSP_TOOL": "1"
   },
+  "attribution": {
+    "commit": "Co-Authored-By: Claude <noreply@anthropic.com>"
+  },
   "permissions": {
     "allow": [
       "Read",
