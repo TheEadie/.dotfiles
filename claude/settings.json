@@ -101,7 +101,11 @@
     "filesystem": {
       "allowWrite": [
         "/tmp",
-        "/run/user/1000/ssh-agent.socket"
+        "/run/user/1000/ssh-agent.socket",
+        "~/.dotnet",
+        "~/.nuget",
+        "~/.local/share/JetBrains",
+        "~/.config/JetBrains"
       ],
       "denyRead": [
         "~/.aws/credentials",
