@@ -1,6 +1,8 @@
 ---
+name: spec
 description: Turn one slice (a GitHub issue) into a focused, implementable spec written as a sticky comment on the issue
 effort: high
+disable-model-invocation: true
 ---
 
 Your task is to flesh out a slice's GitHub issue into a complete, unambiguous specification, and write that spec as a sticky comment on the issue. The spec will be reviewed by a colleague (human or AI) before implementation, so it must be unambiguous and complete.

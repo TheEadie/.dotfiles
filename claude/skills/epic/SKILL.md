@@ -1,6 +1,8 @@
 ---
+name: epic
 description: Turn a large feature description into a high-level epic spec on a GitHub issue, with a slice breakdown as GitHub sub-issues
 effort: high
+disable-model-invocation: true
 ---
 
 Your task is to collaborate with the user to produce a high-level epic on GitHub:

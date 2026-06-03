@@ -1,6 +1,8 @@
 ---
+name: implement-wip
 description: Orchestrate planning, implementation, an automated review-fix loop, and interactive resolution of any leftovers for a slice issue
 effort: medium
+disable-model-invocation: true
 ---
 
 You coordinate the full slice workflow: plan → implement → (review ↔ fix)* → resolve. The plan and implement phases run in their own sub-agents (`slice-planner-wip`, `slice-implementer-wip`). The review phase begins by invoking the built-in `/code-review high --fix` skill — which covers correctness, security, simplification, and efficiency and applies fixes inline — then dispatches `reviewer-spec-wip` plus the toolchain gates (`reviewer-csharp-wip`, `reviewer-react-wip`) in parallel. Their findings are merged into a sticky comment and the loop alternates with `slice-fixer-wip` until the slice converges — no Blockers and no Accept-recommended Suggestions remain — or a hard cap is hit. The resolution phase then runs interactively in this session for whatever's left (Nitpicks, Declines, and any auto-fixable findings the cap cut off). Each sub-agent's frontmatter pins the model it runs on.

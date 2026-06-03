@@ -40,7 +40,6 @@ ln -sv ~/.dotfiles/vim/.vimrc ~
 ln -sv ~/.dotfiles/claude/skills ~/.claude/skills
 ln -sv ~/.dotfiles/claude/hooks ~/.claude/hooks
 ln -sv ~/.dotfiles/claude/statusline ~/.claude/statusline
-ln -sv ~/.dotfiles/claude/commands ~/.claude/commands
 ln -sv ~/.dotfiles/claude/agents ~/.claude/agents
 ln -sv ~/.dotfiles/claude/scripts ~/.claude/scripts
 ln -sv ~/.dotfiles/claude/settings.json ~/.claude/settings.json
