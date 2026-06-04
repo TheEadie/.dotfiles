@@ -103,6 +103,8 @@ Record the base branch, current branch, C# file list, web file list, and compone
 
 **Phase A — code-review with auto-fix.** Invoke the built-in `/code-review high --fix` skill (via the Skill tool). It reviews the diff for correctness, security, simplification, and efficiency, then applies its findings to the working tree. Capture its full findings output verbatim — you'll embed it in the sticky under the `## Code Review` heading and cite the fix count in the verdict.
 
+> **Do not stop when `/code-review` returns.** Invoking `/code-review` is a *sub-step* of this skill, not a handoff back to the user. The code-review skill ends with its own "what was fixed / what was skipped" summary — **that summary is NOT the end of `/implement-wip`, even when it found nothing to fix.** The moment it returns, you are still the orchestrator mid-Step-4: in the *same turn*, without yielding to the user, proceed directly to Phase B below. Treating the code-review summary as a turn boundary is the most common way this skill stalls — do not do it.
+
 This phase runs once at the start of Step 4 only. Subsequent loop iterations skip it; the in-loop fixes come from `slice-fixer-wip` acting on findings from Phase B.
 
 **Phase B — spec + toolchain reviewers.** After Phase A completes, dispatch the remaining reviewer sub-agents in a **single message** (parallel):

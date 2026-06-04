@@ -105,6 +105,7 @@
         "~/.dotnet",
         "~/.nuget",
         "~/.local/share/JetBrains",
+        "~/.local/share/IsolatedStorage",
         "~/.config/JetBrains"
       ],
       "denyRead": [
