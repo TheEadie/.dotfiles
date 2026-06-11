@@ -19,6 +19,7 @@ The orchestrator will tell you:
 
 - The GitHub issue URL (or number) for the slice — its `spec` sticky comment is the spec; its `learnings` sticky comment captures implementer notes.
 - The base branch and current branch (so you can run the diff yourself).
+- The absolute path to the **section file** to write your full findings to (e.g. `/tmp/review-spec.md`).
 
 ## Sticky comment operations
 
@@ -66,9 +67,11 @@ gh api graphql -f query='
 
 6. For each non-trivial change in the diff, ask: did the spec ask for this? If not, flag as scope creep (unless the `learnings` sticky explains it).
 
-## Report format
+## Output
 
-Return your findings in the message below. Stay **under 400 words total**. Be specific: every finding must cite a file:line from the diff and quote the spec line it relates to.
+**Write your full findings to the section file** the orchestrator gave you (e.g. `/tmp/review-spec.md`), using the format below. Stay **under 400 words total**. Be specific: every finding must cite a file:line from the diff and quote the spec line it relates to. Use globally-unique, axis-prefixed IDs — `Spec B1`, `Spec S1`, `Spec N1` — so the orchestrator and the fixer can reference them directly.
+
+Section-file format:
 
 ```
 ## Spec — Acceptance Criteria
@@ -79,21 +82,32 @@ Return your findings in the message below. Stay **under 400 words total**. Be sp
 
 ## Spec — Blockers
 
-### B1 — [short title]
+### Spec B1 — [short title]
 - **File:** `path/to/file:line`
 - **Spec says:** "<quoted line from the issue body>"
 - **Issue:** One sentence — what is missing, wrong, or out of scope.
 - **Fix:** One sentence direction.
 
-(Repeat B2, B3, … Omit the section if empty.)
+(Repeat Spec B2, Spec B3, … Omit the section if empty.)
 
 ## Spec — Suggestions
 
-(Same format, S1, S2, … Use for partial implementations or scope-creep that may be fine but deserves a decision.)
+(Same format, Spec S1, Spec S2, … Use for partial implementations or scope-creep that may be fine but deserves a decision.)
 
 ## Spec — Nitpicks
 
-(Same format, N1, N2, … Optional.)
+(Same format, Spec N1, Spec N2, … Optional.)
+```
+
+**Then return only a compact summary** as your message — the orchestrator assembles the review from the section file and keeps just this summary in context. Do not repeat the full findings in your message.
+
+```
+SECTION: /tmp/review-spec.md (written)
+VERDICT: PASS|FAIL — one line on spec conformance
+FINDINGS:
+- Spec B1 | Blocker | path/to/file:line | short title
+- Spec S1 | Suggestion | path/to/file:line | short title
+(or, if none: FINDINGS: none)
 ```
 
 ## Rules

@@ -5,7 +5,9 @@ effort: medium
 disable-model-invocation: true
 ---
 
-You coordinate the full slice workflow: plan → implement → (review ↔ fix)* → resolve. The plan and implement phases run in their own sub-agents (`slice-planner-wip`, `slice-implementer-wip`). The review phase begins by invoking the built-in `/code-review high --fix` skill — which covers correctness, security, simplification, and efficiency and applies fixes inline — then dispatches `reviewer-spec-wip` plus the toolchain gates (`reviewer-csharp-wip`, `reviewer-react-wip`) in parallel. Their findings are merged into a sticky comment and the loop alternates with `slice-fixer-wip` until the slice converges — no Blockers and no Accept-recommended Suggestions remain — or a hard cap is hit. The resolution phase then runs interactively in this session for whatever's left (Nitpicks, Declines, and any auto-fixable findings the cap cut off). Each sub-agent's frontmatter pins the model it runs on.
+You coordinate the full slice workflow: plan → implement → (review ↔ fix)* → resolve. The plan and implement phases run in their own sub-agents (`slice-planner-wip`, `slice-implementer-wip`). The review phase begins by invoking the built-in `/code-review high --fix` skill — which covers correctness, security, simplification, and efficiency and applies fixes inline — then dispatches `reviewer-spec-wip` plus the toolchain gates (`reviewer-csharp-wip`, `reviewer-react-wip`) in parallel. Each reviewer writes its full findings section to a temp file and returns only a compact summary, so the orchestrator assembles the `review` sticky by concatenating those files with shell — it never holds the verbatim findings in context. The loop alternates with `slice-fixer-wip` until the slice converges — no Blockers and no Accept-recommended Suggestions remain — or a hard cap is hit. The resolution phase then runs interactively in this session for whatever's left (Nitpicks, Declines, and any auto-fixable findings the cap cut off). Each sub-agent's frontmatter pins the model it runs on.
+
+The review phase is deliberately kept lean in this orchestrator's context: sub-agents can't spawn sub-agents, so the parallel reviewer fan-out has to live here, but the bulky verbatim output does not. Reviewers return compact summaries; full bodies live in `/tmp/review-*.md` files and reach the sticky only through the shell-concatenation step below.
 
 ## Sticky comment operations
 
@@ -65,15 +67,11 @@ Skip if the `plan` sticky comment already exists on the issue.
 
 Dispatch the `slice-planner-wip` agent (via the Agent tool with `subagent_type: "slice-planner-wip"`), passing the issue URL/number `<issue>` in the prompt.
 
-After the agent completes, verify the `plan` sticky comment now exists on the issue. If it does not, stop and report the failure to the user.
-
 ## Step 3 — Implement phase
 
 Skip if the `learnings` sticky comment already exists on the issue.
 
 Dispatch the `slice-implementer-wip` agent (via the Agent tool with `subagent_type: "slice-implementer-wip"`), passing the issue URL/number `<issue>` in the prompt.
-
-After the agent completes, verify the `learnings` sticky comment now exists on the issue. If it does not, stop and report the failure to the user.
 
 ## Step 4 — Review-and-fix loop
 
@@ -99,83 +97,62 @@ Identify which component(s) the C# files belong to by the project directory name
 
 Record the base branch, current branch, C# file list, web file list, and component list — reuse these in every review iteration without re-running the diff.
 
+All review bodies live in `/tmp/review-*.md` files so they never enter this context. The orchestrator owns three of them; each reviewer sub-agent owns one:
+
+- `/tmp/review-codereview.md` — `/code-review` findings (orchestrator writes, once).
+- `/tmp/review-spec.md` — `reviewer-spec-wip`'s section (Acceptance Criteria, Blockers, Suggestions, Nitpicks).
+- `/tmp/review-csharp.md` — `reviewer-csharp-wip`'s section. Absent if not dispatched.
+- `/tmp/review-web.md` — `reviewer-react-wip`'s section. Absent if not dispatched.
+- `/tmp/review-verdict.md` — the Verdict paragraph (orchestrator writes each iteration).
+- `/tmp/review-actions.md` — the Recommended Actions list (orchestrator writes each iteration).
+
 ### Iteration 1 — initial review
 
-**Phase A — code-review with auto-fix.** Invoke the built-in `/code-review high --fix` skill (via the Skill tool). It reviews the diff for correctness, security, simplification, and efficiency, then applies its findings to the working tree. Capture its full findings output verbatim — you'll embed it in the sticky under the `## Code Review` heading and cite the fix count in the verdict.
+**Phase A — code-review with auto-fix.** Invoke the built-in `/code-review high --fix` skill (via the Skill tool). It reviews the diff for correctness, security, simplification, and efficiency, then applies its findings to the working tree. When it returns, **immediately Write its verbatim findings to `/tmp/review-codereview.md`** (the body that will sit under the `## Code Review` heading; if it reported nothing, write `None`) and note the fix count for the verdict. This is the one place `/code-review` output passes through your context — getting it onto disk now means you don't re-hold it when you assemble the sticky.
 
 > **Do not stop when `/code-review` returns.** Invoking `/code-review` is a *sub-step* of this skill, not a handoff back to the user. The code-review skill ends with its own "what was fixed / what was skipped" summary — **that summary is NOT the end of `/implement-wip`, even when it found nothing to fix.** The moment it returns, you are still the orchestrator mid-Step-4: in the *same turn*, without yielding to the user, proceed directly to Phase B below. Treating the code-review summary as a turn boundary is the most common way this skill stalls — do not do it.
 
-This phase runs once at the start of Step 4 only. Subsequent loop iterations skip it; the in-loop fixes come from `slice-fixer-wip` acting on findings from Phase B.
+This phase runs once at the start of Step 4 only. Subsequent loop iterations skip it and leave `/tmp/review-codereview.md` untouched; the in-loop fixes come from `slice-fixer-wip` acting on findings from Phase B.
 
-**Phase B — spec + toolchain reviewers.** After Phase A completes, dispatch the remaining reviewer sub-agents in a **single message** (parallel):
+**Phase B — spec + toolchain reviewers.** After Phase A completes, dispatch the remaining reviewer sub-agents in a **single message** (parallel). Tell each one the absolute path to write its full section to, and rely on it returning **only a compact summary** (a one-line verdict plus a findings index — one line per finding: `<ID> | <severity> | <file:line> | <short title>`):
 
-1. **Always** spawn `reviewer-spec-wip` (via the Agent tool with `subagent_type: "reviewer-spec-wip"`) with: the GitHub issue URL, the base branch, and the current branch.
-2. **If any C# files changed**, spawn `reviewer-csharp-wip` (via the Agent tool with `subagent_type: "reviewer-csharp-wip"`) with: the base branch, the current branch, the C# file list, and the component(s).
-3. **If any web files changed**, spawn `reviewer-react-wip` (via the Agent tool with `subagent_type: "reviewer-react-wip"`) with: the base branch, the current branch, the web file list, and the web project directory.
+1. **Always** spawn `reviewer-spec-wip` (via the Agent tool with `subagent_type: "reviewer-spec-wip"`) with: the GitHub issue URL, the base branch, the current branch, and the section-file path `/tmp/review-spec.md`.
+2. **If any C# files changed**, spawn `reviewer-csharp-wip` (via the Agent tool with `subagent_type: "reviewer-csharp-wip"`) with: the base branch, the current branch, the C# file list, the component(s), and the section-file path `/tmp/review-csharp.md`.
+3. **If any web files changed**, spawn `reviewer-react-wip` (via the Agent tool with `subagent_type: "reviewer-react-wip"`) with: the base branch, the current branch, the web file list, the web project directory, and the section-file path `/tmp/review-web.md`.
 
-After all sub-agents have returned, merge their findings into the `review` sticky comment using the template below. Preserve each sub-agent's findings verbatim within its section — do not rerank across axes. Renumber findings only if needed to keep IDs unique (e.g. `Spec B1`, `C# B1`, `Web B1` are fine as-is). Write a one-paragraph verdict that summarises all axes honestly: a Spec-pass / toolchain-fail reads very differently from a Spec-fail / toolchain-pass. In the verdict, also note that `/code-review high --fix` ran and how many fixes it applied (if known).
+Keep only the compact summaries in context — never read the section bodies back in. Reviewers use globally-unique, axis-prefixed IDs (`Spec B1`, `C# B1`, `Web B1`), so the index is unambiguous as-is.
 
-Render the merged review to `/tmp/sticky-review.md` with `<!-- claude:sticky:review -->` as the first line, then create or update the `review` sticky comment using the write flow above.
+**Assemble the `review` sticky.** Decide a one-line `Accept` or `Decline` recommendation for every finding in the compact index, summarising all axes honestly (a Spec-pass / toolchain-fail reads very differently from a Spec-fail / toolchain-pass). Then build the sticky from files, without pulling the section bodies into context:
 
-Wrap the body content in a single `<details>` block (collapsed by default) so the comment renders as a one-line header on the issue. Keep the sticky marker on line 1 and the `# Review — …` title outside the `<details>`. The blank line between `<summary>` and the first heading is required for GitHub to render the inner markdown. When you later update findings in place during Step 5, preserve the `<details>` / `</details>` wrapper — only the `**Decision:**` lines inside change.
+1. Write the Verdict paragraph to `/tmp/review-verdict.md` — summarise every axis from the compact summaries, and note that `/code-review high --fix` ran and applied N fixes (if known) and any blockers the user must address before merging.
+2. Write the Recommended Actions list to `/tmp/review-actions.md` — one `- **<ID>** — Accept|Decline — [reason]` line per finding, covering every finding.
+3. Concatenate the pieces with shell (the sticky marker must be line 1; the blank lines the `printf`s emit are required for GitHub to render the inner markdown):
 
-```markdown
-<!-- claude:sticky:review -->
-
-# Review
-
-_Generated by Claude Code._
-
-<details>
-<summary>Show review</summary>
-
-## Verdict
-
-[One paragraph. Summarise all axes: does the implementation satisfy the spec? Do the toolchains pass? Note that `/code-review high --fix` ran and applied N fixes (if known). Any blockers the user must address before merging?]
-
-## Code Review
-
-[Verbatim feedback from `/code-review high --fix`, including the findings it reported and which were applied to the working tree. If `/code-review` reported no findings, write "None". On loop re-reviews this section is preserved as-is — Phase A does not re-run.]
-
-## Spec
-
-[Verbatim from reviewer-spec-wip: Acceptance Criteria table, Blockers, Suggestions, Nitpicks. If a sub-section is empty, write "None".]
-
-## C# Toolchain
-
-[Verbatim from reviewer-csharp-wip, including the build PASS/FAIL and inspections PASS/FAIL lines. Omit this whole section if reviewer-csharp-wip was not dispatched.]
-
-## Web Toolchain
-
-[Verbatim from reviewer-react-wip, including the lint PASS/FAIL line. Omit this whole section if reviewer-react-wip was not dispatched.]
-
-## Recommended Actions
-
-[For every finding across all axes, state your recommended action and a one-line reason. Reference findings by axis-prefixed ID:]
-
-- **Spec B1** — Accept — [reason]
-- **C# B1** — Accept — [reason]
-- **C# S1** — Decline — [reason]
-- **Web N1** — Accept — [reason]
-
-Valid actions: `Accept` or `Decline`. Cover every finding.
-
-</details>
+```bash
+{
+  printf '<!-- claude:sticky:review -->\n\n# Review\n\n_Generated by Claude Code._\n\n<details>\n<summary>Show review</summary>\n\n## Verdict\n\n'
+  cat /tmp/review-verdict.md
+  printf '\n\n## Code Review\n\n'; cat /tmp/review-codereview.md
+  printf '\n\n## Spec\n\n'; cat /tmp/review-spec.md
+  [ -f /tmp/review-csharp.md ] && { printf '\n\n## C# Toolchain\n\n'; cat /tmp/review-csharp.md; }
+  [ -f /tmp/review-web.md ] && { printf '\n\n## Web Toolchain\n\n'; cat /tmp/review-web.md; }
+  printf '\n\n## Recommended Actions\n\n'; cat /tmp/review-actions.md
+  printf '\n\n</details>\n'
+} > /tmp/sticky-review.md
 ```
 
-Verify the `review` sticky comment now exists. If it does not, stop and report the failure to the user.
+4. Upsert it: `~/.claude/scripts/gh-sticky upsert <number> review /tmp/sticky-review.md`. The `<details>` wrapper keeps the comment collapsed to a one-line header on the issue.
 
 ### Loop
 
 Repeat the following until either the auto-fixable list is empty or you have completed 3 review iterations:
 
-1. **Read the latest `review` sticky comment** (using the read flow above) and parse its `## Recommended Actions` section.
-2. **Collect the auto-fixable findings** — every finding whose severity is `Blocker` or `Suggestion` *and* whose recommendation is `Accept`. **Do not include Nitpicks. Do not include Declines.** These stay for the user in Step 5.
-3. If the auto-fixable list is **empty**, exit the loop and proceed to Step 5.
-4. If you have already completed **3 review iterations** in total, exit the loop and proceed to Step 5 — note in your hand-off that the cap was hit so the user knows there may still be auto-fixable items left.
-5. Dispatch the `slice-fixer-wip` agent (via the Agent tool with `subagent_type: "slice-fixer-wip"`), passing the issue URL/number `<issue>` plus the auto-fixable findings list. Each item should include its ID, severity, file:line, the issue, and the proposed fix — copied verbatim from the relevant section of the `review` sticky comment so `slice-fixer-wip` doesn't have to re-parse it.
-6. After `slice-fixer-wip` returns, dispatch the Phase B reviewer sub-agents in parallel (using the recorded base branch, current branch, file lists, and component list) to produce a fresh review against the updated code. Do **not** re-run `/code-review` — Phase A is a once-per-Step-4 step. Merge their outputs and update the `review` sticky comment using the same template, **preserving the existing `## Code Review` section verbatim from the previous iteration**. This is the next review iteration — increment your counter. Verify the `review` sticky comment has been updated.
-7. Go back to step 1.
+1. From the compact findings index of the latest Phase B and the recommendations you assigned, **collect the auto-fixable findings** — every finding whose severity is `Blocker` or `Suggestion` *and* whose recommendation is `Accept`. **Do not include Nitpicks. Do not include Declines.** These stay for the user in Step 5.
+2. If the auto-fixable list is **empty**, exit the loop and proceed to Step 5.
+3. If you have already completed **3 review iterations** in total, exit the loop and proceed to Step 5 — note in your hand-off that the cap was hit so the user knows there may still be auto-fixable items left.
+4. Dispatch the `slice-fixer-wip` agent (via the Agent tool with `subagent_type: "slice-fixer-wip"`), passing the issue URL/number `<issue>`, the list of auto-fixable finding **IDs**, and the section-file paths (`/tmp/review-spec.md`, plus `/tmp/review-csharp.md` and/or `/tmp/review-web.md` if they exist). It reads each finding's full detail from those files by ID — do **not** copy verbatim findings into the prompt. (The files still hold the latest Phase B findings at this point; the next Phase B overwrites them only afterwards.)
+5. After `slice-fixer-wip` returns, re-dispatch the Phase B reviewer sub-agents in parallel (same inputs and section-file paths) to produce a fresh review against the updated code. They overwrite their section files. Do **not** re-run `/code-review` and do **not** touch `/tmp/review-codereview.md` — Phase A is a once-per-Step-4 step. Regenerate `/tmp/review-verdict.md` and `/tmp/review-actions.md` from the new compact summaries, re-run the assembly shell block, and upsert. This is the next review iteration — increment your counter. Verify the `review` sticky comment has been updated.
+6. Go back to step 1.
 
 Briefly tell the user when each iteration begins and ends, including which findings went to `slice-fixer-wip` and what `slice-fixer-wip` reported back (Fixed / Deviated / Skipped). Do not surface the full review body — the user can read the sticky if they want detail.
 

@@ -11,14 +11,12 @@ You apply a precise list of review findings to the code. You DO NOT re-review th
 The orchestrator will pass:
 
 - The slice's GitHub issue URL or `#NNN`.
-- A list of findings to fix. Each finding includes:
-  - ID (e.g. `Spec B1`, `C# S2`, `Web B1`)
-  - Severity (`Blocker` or `Suggestion` — Nitpicks are never sent here)
-  - File and line reference (`path/to/file:line`)
-  - The issue (what's wrong)
-  - The proposed fix
+- A list of finding **IDs** to fix (e.g. `Spec B1`, `C# S2`, `Web B1`). These are the items the orchestrator has already filtered down to — only Blockers and Suggestions, never Nitpicks.
+- The paths of the review **section files** that hold the full findings (e.g. `/tmp/review-spec.md`, `/tmp/review-csharp.md`, `/tmp/review-web.md`).
 
-If the list is empty, stop and report "nothing to do".
+If the ID list is empty, stop and report "nothing to do".
+
+For each ID, look up its full detail by grepping the section files for the ID heading (e.g. `### Spec B1`) and reading that finding's block — severity, `File:` line, `Issue:`, and `Fix:`. That block is your spec for the fix. If an ID isn't found in any section file, record it as skipped with that reason rather than guessing.
 
 ## Step 2 — Read just enough context
 

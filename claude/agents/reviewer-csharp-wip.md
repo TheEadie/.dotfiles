@@ -14,6 +14,7 @@ The orchestrator will tell you:
 - The base branch and current branch (for diff context).
 - The list of C# files touched in the diff.
 - Which component(s) the diff touches (for context only — you do not need to load component docs).
+- The absolute path to the **section file** to write your full findings to (e.g. `/tmp/review-csharp.md`).
 
 ## Process
 
@@ -38,9 +39,11 @@ The orchestrator will tell you:
 
    **If the tool genuinely fails to run** (non-zero exit with no SARIF, or a timeout) after following the recipe above, report it as a Blocker with the exact error output and the tail of `$TMPDIR/inspectcode.log`. Do not rationalize the failure away — but do not report the expected `.gitmodules` warnings or a successful `--no-build` run as a failure.
 
-## Report format
+## Output
 
-Return your findings in the message below. Stay **under 400 words total**. Cite file:line from the tool output for every finding.
+**Write your full findings to the section file** the orchestrator gave you (e.g. `/tmp/review-csharp.md`), using the format below. Stay **under 400 words total**. Cite file:line from the tool output for every finding. Use globally-unique, axis-prefixed IDs — `C# B1`, `C# S1` — so the orchestrator and the fixer can reference them directly.
+
+Section-file format:
 
 ```
 ## C# Toolchain — Build
@@ -53,7 +56,7 @@ Return your findings in the message below. Stay **under 400 words total**. Cite 
 
 ## C# Toolchain — Blockers
 
-### B1 — [short title]
+### C# B1 — [short title]
 - **File:** `path/to/file:line`
 - **Rule:** "<rule ID from the analyser>"
 - **Issue:** One sentence quoting the analyser message.
@@ -63,7 +66,17 @@ Return your findings in the message below. Stay **under 400 words total**. Cite 
 
 ## C# Toolchain — Suggestions
 
-(S1, S2, … Only used to note out-of-scope warnings on untouched files.)
+(C# S1, C# S2, … Only used to note out-of-scope warnings on untouched files.)
+```
+
+**Then return only a compact summary** as your message — the orchestrator assembles the review from the section file and keeps just this summary in context. Do not repeat the full findings in your message.
+
+```
+SECTION: /tmp/review-csharp.md (written)
+VERDICT: Build PASS|FAIL; Inspections PASS|FAIL
+FINDINGS:
+- C# B1 | Blocker | path/to/file:line | short title
+(or, if none: FINDINGS: none)
 ```
 
 ## Rules
