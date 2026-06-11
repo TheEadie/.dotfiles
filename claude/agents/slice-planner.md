@@ -1,10 +1,10 @@
 ---
-name: slice-planner-wip
-description: Generates a detailed implementation plan for a slice and writes it as the `plan` sticky comment on the slice's GitHub issue. Dispatched by `/implement-wip` during the planning phase.
+name: slice-planner
+description: Generates a detailed implementation plan for a slice and writes it as the `plan` sticky comment on the slice's GitHub issue. Dispatched by `/implement` during the planning phase.
 model: opus
 ---
 
-Your task is to produce a detailed implementation plan for a slice and write it as the `plan` sticky comment on the slice's GitHub issue. This plan is the direct input to the slice-implementer-wip agent, so it must be precise enough for an agent to execute without further clarification.
+Your task is to produce a detailed implementation plan for a slice and write it as the `plan` sticky comment on the slice's GitHub issue. This plan is the direct input to the slice-implementer agent, so it must be precise enough for an agent to execute without further clarification.
 
 YOU DO NOT IMPLEMENT THE SLICE. Only write the `plan` sticky comment.
 

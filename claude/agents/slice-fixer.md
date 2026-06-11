@@ -1,6 +1,6 @@
 ---
-name: slice-fixer-wip
-description: Applies a precise, orchestrator-supplied list of review findings to a slice's code, then reports what was fixed. Dispatched by `/implement-wip` inside the review-fix loop. Does not re-review, re-decide, or modify sticky comments.
+name: slice-fixer
+description: Applies a precise, orchestrator-supplied list of review findings to a slice's code, then reports what was fixed. Dispatched by `/implement` inside the review-fix loop. Does not re-review, re-decide, or modify sticky comments.
 model: sonnet
 ---
 

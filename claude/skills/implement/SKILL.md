@@ -1,11 +1,11 @@
 ---
-name: implement-wip
+name: implement
 description: Orchestrate planning, implementation, and an automated review-fix loop for a slice issue
 effort: medium
 disable-model-invocation: true
 ---
 
-You coordinate the full slice workflow: plan → implement → review → hand off. Every phase runs in its own sub-agent (`slice-planner-wip`, `slice-implementer-wip`, `review-coordinator-wip`), so this orchestrator holds almost no phase output in context. The entire review-and-fix loop — `/code-review high --fix`, the spec and toolchain reviewers, `review` sticky assembly, and the `slice-fixer-wip` ↔ rereview loop — lives inside `review-coordinator-wip`, which returns only a compact summary. Each sub-agent's frontmatter pins the model it runs on.
+You coordinate the full slice workflow: plan → implement → review → hand off. Every phase runs in its own sub-agent (`slice-planner`, `slice-implementer`, `review-coordinator`), so this orchestrator holds almost no phase output in context. The entire review-and-fix loop — `/code-review high --fix`, the spec and toolchain reviewers, `review` sticky assembly, and the `slice-fixer` ↔ rereview loop — lives inside `review-coordinator`, which returns only a compact summary. Each sub-agent's frontmatter pins the model it runs on.
 
 Sub-agents in this harness *can* spawn further sub-agents, so the review coordinator is free to run the parallel reviewer fan-out and invoke `/code-review` (which fans out internally) from inside its own context — none of that bulky output passes through this orchestrator.
 
@@ -65,19 +65,19 @@ Record the issue URL and number as `<issue>` for use below. Proceed immediately 
 
 Skip if the `plan` sticky comment already exists on the issue.
 
-Dispatch the `slice-planner-wip` agent (via the Agent tool with `subagent_type: "slice-planner-wip"`), passing the issue URL/number `<issue>` in the prompt.
+Dispatch the `slice-planner` agent (via the Agent tool with `subagent_type: "slice-planner"`), passing the issue URL/number `<issue>` in the prompt.
 
 ## Step 3 — Implement phase
 
 Skip if the `learnings` sticky comment already exists on the issue.
 
-Dispatch the `slice-implementer-wip` agent (via the Agent tool with `subagent_type: "slice-implementer-wip"`), passing the issue URL/number `<issue>` in the prompt.
+Dispatch the `slice-implementer` agent (via the Agent tool with `subagent_type: "slice-implementer"`), passing the issue URL/number `<issue>` in the prompt.
 
 ## Step 4 — Review-and-fix loop
 
 Skip this entire step if the `review` sticky comment already exists on the issue.
 
-Dispatch the `review-coordinator-wip` agent (via the Agent tool with `subagent_type: "review-coordinator-wip"`). 
+Dispatch the `review-coordinator` agent (via the Agent tool with `subagent_type: "review-coordinator"`). 
 
 Pass it:
 - The issue URL/number `<issue>`.
@@ -87,7 +87,7 @@ Pass it:
 
 Relay the review coordinator's compact summary to the user:
 - How many review iterations ran and whether the loop converged or hit the 3-iteration cap
-- How many findings the loop auto-fixed (and any that `slice-fixer-wip` reported as Deviated or Skipped)
+- How many findings the loop auto-fixed (and any that `slice-fixer` reported as Deviated or Skipped)
 - Whether any unresolved Blockers or pending findings remain (visible in the `review` sticky)
 - Next step: run `/pr` to create the pull request
 

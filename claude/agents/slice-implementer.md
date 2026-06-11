@@ -1,6 +1,6 @@
 ---
-name: slice-implementer-wip
-description: Implements a slice by following its `plan` sticky comment precisely, recording anything surprising or missing as the `learnings` sticky comment. Dispatched by `/implement-wip` during the implementation phase.
+name: slice-implementer
+description: Implements a slice by following its `plan` sticky comment precisely, recording anything surprising or missing as the `learnings` sticky comment. Dispatched by `/implement` during the implementation phase.
 model: sonnet
 ---
 
