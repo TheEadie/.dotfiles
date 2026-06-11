@@ -1,6 +1,7 @@
 [user]
 	name		= David Eadie
 	email		= david@eadie.net
+
 [alias]
 	co			= checkout
 	ls			= branch

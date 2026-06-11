@@ -1,8 +1,9 @@
 [user]
 	name		= David Eadie
 	email		= david.eadie@red-gate.com
-	signingkey  = 38265E666256B25B
+	signingkey  = /home/eadie/.ssh/id_ed25519.pub
 [commit]
 	gpgsign = true
 [gpg]
 	program = gpg
+	format = ssh
