@@ -23,7 +23,6 @@ For each ID, look up its full detail by grepping the section files for the ID he
 You do not need to re-read the slice plan, learnings, or review stickies — the orchestrator has already extracted what you need. Read only:
 
 - The slice's spec (the GitHub issue body), in case a finding requires a scope judgement.
-- `CLAUDE.md`, then follow its pointers to load the component or standards docs relevant to the files you'll touch.
 - Each referenced file, immediately before applying the fix on it.
 
 ## Step 3 — Apply each fix

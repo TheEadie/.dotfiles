@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gh-sticky — manage sticky comments on GitHub issues.
+# gh-sticky — manage sticky comments and read the issue tree on GitHub issues.
 #
 # A sticky comment is identified by a hidden HTML-comment marker on the first
 # line of the comment body: `<!-- claude:sticky:<name> -->`. Subsequent runs
@@ -10,8 +10,13 @@
 #   gh-sticky get-id <issue> <name>         Print numeric id, or empty
 #   gh-sticky get-body <issue> <name>       Print body to stdout, or empty
 #   gh-sticky save <issue> <name> <file>    Write body to <file>, or empty file
-#   gh-sticky upsert <issue> <name> <file>  Create or update; <file>'s first
-#                                            line must be the sticky marker.
+#   gh-sticky upsert <issue> <name> <file>  Create or update. The marker is
+#                                            managed for you: write just the
+#                                            body — if line 1 isn't the correct
+#                                            marker it's prepended (any existing
+#                                            claude:sticky marker is replaced).
+#   gh-sticky parent <issue>                Print the parent epic + sibling
+#                                            sub-issues as JSON, or "null".
 
 set -euo pipefail
 
@@ -20,14 +25,23 @@ issue=${2:-}
 name=${3:-}
 
 usage() {
-  sed -n '3,15p' "$0" >&2
+  sed -n '3,19p' "$0" >&2
   exit 64
 }
 
-[[ -n "$cmd" && -n "$issue" && -n "$name" ]] || usage
+# Validate arity before any network call so a bad invocation prints usage.
+# parent takes only <issue>; every other command needs <issue> and <name>.
+case "$cmd" in
+  parent)                            [[ -n "$issue" ]] || usage ;;
+  get|get-id|get-body|save|upsert)   [[ -n "$issue" && -n "$name" ]] || usage ;;
+  *)                                 usage ;;
+esac
 
-marker="<!-- claude:sticky:${name} -->"
 repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
+# Only sticky-comment subcommands use these; parent ignores them (name is empty
+# there, so marker is unused, and fetch_first is just a definition until called).
+marker="<!-- claude:sticky:${name} -->"
 
 # Stream matching comments (one JSON object per line) across all pages,
 # then collapse to the first match (or empty).
@@ -38,6 +52,22 @@ fetch_first() {
 }
 
 case "$cmd" in
+  parent)
+    owner=${repo%/*}
+    reponame=${repo#*/}
+    gh api graphql -f query='
+      query($owner: String!, $repo: String!, $number: Int!) {
+        repository(owner: $owner, name: $repo) {
+          issue(number: $number) {
+            parent {
+              number title body url
+              subIssues(first: 100) { nodes { number title state } }
+            }
+          }
+        }
+      }' -f owner="$owner" -f repo="$reponame" -F number="$issue" \
+      --jq '.data.repository.issue.parent // "null"'
+    ;;
   get)
     out=$(fetch_first)
     [[ -n "$out" ]] && printf '%s\n' "$out" || echo "null"
@@ -56,17 +86,26 @@ case "$cmd" in
   upsert)
     file=${4:-}
     [[ -n "$file" && -f "$file" ]] || { echo "missing or unreadable body file" >&2; exit 64; }
+    # Normalize the marker so callers write only the body: if line 1 is already
+    # any claude:sticky marker, replace it with the correct one; otherwise
+    # prepend the correct marker + blank line. Idempotent when already correct.
+    tmp=$(mktemp)
     first_line=$(head -n 1 "$file")
-    if [[ "$first_line" != "$marker" ]]; then
-      echo "first line of $file must be: $marker" >&2
-      exit 65
+    if [[ "$first_line" == "$marker" ]]; then
+      cp "$file" "$tmp"
+    elif [[ "$first_line" =~ ^\<!--\ claude:sticky:.*\ --\>$ ]]; then
+      { printf '%s\n' "$marker"; tail -n +2 "$file"; } > "$tmp"
+    else
+      { printf '%s\n\n' "$marker"; cat "$file"; } > "$tmp"
     fi
     id=$(fetch_first | jq -r '.id // empty')
     if [[ -n "$id" ]]; then
-      gh api -X PATCH "repos/$repo/issues/comments/$id" -F body=@"$file" >/dev/null
+      gh api -X PATCH "repos/$repo/issues/comments/$id" -F body=@"$tmp" >/dev/null
+      rm -f "$tmp"
       echo "updated sticky:$name (comment $id)"
     else
-      gh issue comment "$issue" --body-file "$file"
+      gh issue comment "$issue" --body-file "$tmp"
+      rm -f "$tmp"
     fi
     ;;
   *)

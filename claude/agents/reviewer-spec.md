@@ -21,32 +21,6 @@ The orchestrator will tell you:
 - The base branch and current branch (so you can run the diff yourself).
 - The absolute path to the **section file** to write your full findings to (e.g. `/tmp/review-spec.md`).
 
-## Sticky comment operations
-
-**Read a sticky** with the `gh-sticky` helper (single approved command — do not chain `gh api` calls inline):
-```bash
-~/.claude/scripts/gh-sticky get <number> <name>
-```
-
-Prints `{id, body, url}` JSON, or `null` if none. Variants: `get-id`, `get-body` (prints body to stdout), and `save <number> <name> <file>` (writes body to file).
-
-**Fetch parent epic and sibling sub-issues:**
-```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-OWNER=${REPO%/*}; NAME=${REPO#*/}
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) {
-        parent {
-          number title body url
-          subIssues(first: 100) { nodes { number title state } }
-        }
-      }
-    }
-  }' -f owner="$OWNER" -f repo="$NAME" -F number=<slice-issue-number>
-```
-
 ## Process
 
 1. Fetch the slice's spec from the `spec` sticky comment:
@@ -57,9 +31,9 @@ gh api graphql -f query='
 
    Read it end to end. Note every acceptance criterion verbatim — these are the only criteria you check.
 
-2. Read the `learnings` sticky comment if present (using the read operation above with name `learnings`) — implementer notes may explain why something deviated from the spec. A deviation explained there is NOT a finding; mention it as resolved.
+2. Read the `learnings` sticky comment if present (`~/.claude/scripts/gh-sticky get-body <number> learnings`) — implementer notes may explain why something deviated from the spec. A deviation explained there is NOT a finding; mention it as resolved.
 
-3. Query the slice's parent epic via the GraphQL query above. If a parent exists, read its body for scope and non-goals. If `parent` is `null`, treat this as a standalone slice.
+3. Query the slice's parent epic via `gh-sticky parent <number>`. If a parent exists, read its body for scope and non-goals. If `parent` is `null`, treat this as a standalone slice.
 
 4. Run `git diff <base>...<current>` and read it in full. List every file added, modified, or deleted.
 

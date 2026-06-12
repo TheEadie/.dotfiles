@@ -8,42 +8,6 @@ Your task is to produce a detailed implementation plan for a slice and write it 
 
 YOU DO NOT IMPLEMENT THE SLICE. Only write the `plan` sticky comment.
 
-## Sticky comment operations
-
-Sticky comments are GitHub issue comments identified by a hidden HTML-comment marker on the first line: `<!-- claude:sticky:<name> -->`. Subsequent runs find and update the existing comment by marker.
-
-Use the `gh-sticky` helper for every sticky operation — it wraps the lookup-then-PATCH-or-create dance in a single approved command so the sandbox doesn't prompt on each invocation. Do not chain `gh api` calls inline.
-
-**Write (create-or-update) a sticky:**
-1. Render the full body to `/tmp/sticky-<name>.md` with the marker as the first line.
-2. Run `~/.claude/scripts/gh-sticky upsert <number> <name> /tmp/sticky-<name>.md`.
-
-The helper refuses to write if the body file's first line isn't the matching marker.
-
-**Fetch parent epic and sibling sub-issues:**
-```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-OWNER=${REPO%/*}; NAME=${REPO#*/}
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) {
-        parent {
-          number title body url
-          subIssues(first: 100) { nodes { number title state } }
-        }
-      }
-    }
-  }' -f owner="$OWNER" -f repo="$NAME" -F number=<slice-issue-number>
-```
-
-**Read a sticky** (prints `{id, body, url}` JSON, or `null` if none):
-```bash
-~/.claude/scripts/gh-sticky get <number> <name>
-```
-
-There are also `get-id`, `get-body` (prints body to stdout), and `save <number> <name> <file>` (writes body to file) for narrower needs.
-
 ## Step 1 — Identify the slice issue
 
 The orchestrator will pass you a GitHub issue reference (URL or `#NNN`). If it is missing, stop and ask. Do not proceed without an explicit issue reference.
@@ -64,7 +28,7 @@ Record the issue number and URL for use in Step 4.
 Read everything needed to produce an accurate, codebase-consistent plan:
 
 - The slice's spec — the `spec` sticky comment on the issue (requirements, out of scope, acceptance criteria).
-- The parent epic issue (if any), via the GraphQL query above. If a parent exists, read its body for scope boundaries and the major capabilities this slice contributes to.
+- The parent epic issue (if any), via `gh-sticky parent <number>`. If a parent exists, read its body for scope boundaries and the major capabilities this slice contributes to.
 - For each earlier sibling sub-issue in `parent.subIssues.nodes` that is closed (or has a `learnings` sticky), read its `learnings` sticky comment — they capture known caveats from prior implementation.
 - `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. Follow its pointers to load the docs for the areas this slice touches.
 - The source files the slice will most likely create or modify.
@@ -86,10 +50,9 @@ Use the ExitPlanMode tool to exit plan mode before writing the sticky comment.
 
 ## Step 4 — Write the plan sticky comment
 
-Write the plan mode output from Step 3 directly to `/tmp/sticky-plan.md` with `<!-- claude:sticky:plan -->` as the first line, followed by the plan text exactly as produced in plan mode. Do not reformat, restructure, or convert the plan into any template — post it as-is.
-
-Then create or update the `plan` sticky comment using the write flow above.
+Write the plan mode output from Step 3 directly to `/tmp/sticky-plan.md`.
+Then create or update the `plan` sticky comment: `~/.claude/scripts/gh-sticky upsert <number> plan /tmp/sticky-plan.md`.
 
 ## Step 5 — Hand off
 
-Report the issue URL (noting that the plan is in the `plan` sticky comment) and that the slice is ready for the implementation phase. Do not commit, branch, or open a PR.
+Report the issue URL and that the slice is ready for the implementation phase. Do not commit, branch, or open a PR.

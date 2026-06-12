@@ -6,47 +6,11 @@ model: sonnet
 
 Your task is to implement a slice by following its `plan` sticky comment precisely, tracking progress with tasks, and recording anything the plan missed or got wrong as the `learnings` sticky comment on the same GitHub issue.
 
-## Sticky comment operations
-
-Sticky comments are GitHub issue comments identified by a hidden HTML-comment marker on the first line: `<!-- claude:sticky:<name> -->`. Subsequent runs find and update the existing comment by marker.
-
-Use the `gh-sticky` helper for every sticky operation — it wraps the lookup-then-PATCH-or-create dance in a single approved command so the sandbox doesn't prompt on each invocation. Do not chain `gh api` calls inline.
-
-**Read a sticky** (prints `{id, body, url}` JSON, or `null` if none):
-```bash
-~/.claude/scripts/gh-sticky get <number> <name>
-```
-
-There are also `get-id`, `get-body` (prints body to stdout), and `save <number> <name> <file>` (writes body to file) for narrower needs.
-
-**Write (create-or-update) a sticky:**
-1. Render the full body to `/tmp/sticky-<name>.md` with the marker as the first line.
-2. Run `~/.claude/scripts/gh-sticky upsert <number> <name> /tmp/sticky-<name>.md`.
-
-The helper refuses to write if the body file's first line isn't the matching marker.
-
-**Fetch parent epic and sibling sub-issues:**
-```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-OWNER=${REPO%/*}; NAME=${REPO#*/}
-gh api graphql -f query='
-  query($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) {
-        parent {
-          number title body url
-          subIssues(first: 100) { nodes { number title state } }
-        }
-      }
-    }
-  }' -f owner="$OWNER" -f repo="$NAME" -F number=<slice-issue-number>
-```
-
 ## Step 1 — Identify the slice issue
 
 The orchestrator will pass you a GitHub issue reference (URL or `#NNN`). If it is missing, stop and ask. Do not proceed without an explicit issue reference.
 
-Fetch the issue and its `plan` sticky comment (using the read flow above). If the `plan` sticky does not exist, stop and report the failure — the planning phase must run first.
+Fetch the issue and its `plan` sticky comment (`~/.claude/scripts/gh-sticky get-body <number> plan`). If the `plan` sticky does not exist, stop and report the failure — the planning phase must run first.
 
 ## Step 2 — Read the plan and context
 
@@ -54,29 +18,16 @@ Read everything before touching any files:
 
 - The slice's plan — the `plan` sticky comment on the issue. This is the authoritative implementation guide.
 - The slice's spec — the `spec` sticky comment on the issue (`~/.claude/scripts/gh-sticky get-body <number> spec`). These are the acceptance criteria you will verify against at the end.
-- `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. Follow its pointers to load the docs for the areas touched.
-- The parent epic issue (if any) and its sibling sub-issues, via the GraphQL query above. For each earlier sibling sub-issue that has a `learnings` sticky, read it — caveats from prior slices may apply here too.
 
 ## Step 3 — Create tasks
 
 Use TaskCreate to break the plan into discrete tasks before starting any work — one task per major section of the plan's implementation details. This gives the user a live view of progress. Mark each task `in_progress` immediately before starting it and `completed` immediately after finishing it. Do not batch completions.
 
-## Step 4 — Implement
-
-Follow the plan exactly. For each task:
-
-1. Mark the task `in_progress`.
-2. Make the changes the plan describes — using TDD when the task involves code with testable behaviour (see below).
-3. Run any verification steps the plan specifies for this section.
-4. Mark the task `completed`.
-
-If the plan is silent on something you need to decide, make the simplest reasonable choice and record it as a learning (see below).
-
-If a verification step fails, diagnose the root cause rather than retrying the same action. If the fix requires a significant deviation from the plan, note it as a learning.
-
 ### Use TDD for code with behaviour
 
 When a task involves writing code with observable behaviour (calculators, parsers, formatters, ranking logic, request handlers, etc. — anything the plan lists tests against), implement it test-first using red-green-refactor in **vertical slices**: one test → minimal code to pass → next test. Do **not** write all the tests for a task up front and then all the implementation — bulk-written tests verify imagined behaviour, not real behaviour, and become coupled to shape rather than capability.
+
+Create seperate tasks for the red, green, and refactor steps of TDD so the user can see progress within a single plan section.
 
 If a skill named `tdd` is listed in your available skills, invoke it via the Skill tool before starting the first such task in this slice and follow its workflow. If no `tdd` skill is available, apply these principles inline:
 
@@ -86,6 +37,19 @@ If a skill named `tdd` is listed in your available skills, invoke it via the Ski
 - Follow whatever testing strategy doc `CLAUDE.md` points to for tier choice and seams.
 
 TDD does **not** apply to: docs changes, config/infra edits, migration SQL, dependency bumps, file moves, or other changes that aren't exercising behaviour. Follow the plan directly for those.
+
+## Step 4 — Implement
+
+Follow the plan exactly. For each task:
+
+1. Mark the task `in_progress`.
+2. Make the changes the plan describes.
+3. Run any verification steps the plan specifies for this section.
+4. Mark the task `completed`.
+
+If the plan is silent on something you need to decide, make the simplest reasonable choice and record it as a learning (see below).
+
+If a verification step fails, diagnose the root cause rather than retrying the same action. If the fix requires a significant deviation from the plan, note it as a learning.
 
 ### What to record as a learning
 
@@ -106,17 +70,13 @@ Every file you create or modify that is not in the plan's "Files to Create / Mod
 
 Write the learnings even if there is nothing notable — its presence signals the slice has been implemented. If there is nothing to record, say so briefly.
 
-Render the learnings body to `/tmp/sticky-learnings.md` with `<!-- claude:sticky:learnings -->` as the first line, then create or update the `learnings` sticky comment using the write flow above.
-
-The issue stays open — `/pr` closes it when the implementing PR merges.
+Render the learnings body to `/tmp/sticky-learnings.md`, then create or update the `learnings` sticky comment: `~/.claude/scripts/gh-sticky upsert <number> learnings /tmp/sticky-learnings.md`.
 
 ### Learnings body template
 
-Wrap the body content in a single `<details>` block (collapsed by default) so the comment renders as a one-line header on the issue. Keep the sticky marker on line 1 and the `# Learnings: …` title outside the `<details>` so readers can still see what the comment is without expanding it. The blank line between `<summary>` and the first heading is required for GitHub to render the inner markdown.
+Wrap the body content in a single `<details>` block (collapsed by default) so the comment renders as a one-line header on the issue. Keep the `# Learnings: …` title outside the `<details>` so readers can still see what the comment is without expanding it (the helper adds the sticky marker above it). The blank line between `<summary>` and the first heading is required for GitHub to render the inner markdown.
 
 ```markdown
-<!-- claude:sticky:learnings -->
-
 # Learnings
 
 _Generated by Claude Code._
@@ -146,7 +106,7 @@ Omit this section if there are none.]
 
 Report:
 - The implementation is complete
-- The issue URL (the `learnings` sticky comment) and a one-line summary of the most significant learning (if any)
+- The issue URL
 - That the slice is ready for the review phase
 
 Do not commit, push, or open a PR — the user triggers that.

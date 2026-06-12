@@ -18,26 +18,10 @@ The orchestrator will tell you:
 
 ## Process
 
-1. Run the build with `dotnet build --warnaserror`. Capture the exact output of any failure. If the repo has a specific solution file, build that — find it with `find . -maxdepth 3 -name '*.sln' | head -5`. **Any warning is a Blocker.**
-2. **Always run JetBrains inspections — this step is mandatory and must never be skipped, even if the build passed.** A passing build and a passing inspection check different things; skipping one does not substitute for the other.
+1. Run the build with `dotnet build --warnaserror`. Capture the exact output of any failure. **Any warning is a Blocker.**
+2. Run JetBrains inspections with `jb inspectcode`. Capture the exact output of any failure. **Any warning is a Blocker.**
 
-   **Sandbox-aware invocation (required).** Under the Claude Code sandbox two things break the naive `dotnet jb inspectcode`:
-   - The `jb` global tool can't locate the runtime and dies with *"You must install .NET to run this application"* unless `DOTNET_ROOT` is set.
-   - inspectcode's *own* MSBuild build worker crashes with **exit 4** right after "Build has started" (it cannot be run inside the sandbox). A plain `dotnet build` works fine, so build first, then analyse the pre-built output with `--no-build`.
-
-   There is **no `dotnet-tools.json` manifest** in this repo — `jb` is a global tool, so do **not** run `dotnet tool restore`, and call `jb` directly (not `dotnet jb`). Run the whole step with a hard Bash timeout (e.g. 400000ms) and redirect to a log file so output is never lost if it hangs:
-   ```bash
-   export DOTNET_ROOT="$HOME/.dotnet" DOTNET_CLI_HOME="$TMPDIR" DOTNET_CLI_TELEMETRY_OPTOUT=1
-   # Pre-build so inspectcode can use --no-build (its internal build crashes exit 4 under the sandbox).
-   # Plain build only — NOT --warnaserror (vulnerability NU* warnings would fail it); the --warnaserror
-   # gate is step 1's job. -maxcpucount:1 + EnableSourceControlManagerQueries=false are sandbox-required.
-   dotnet build <solution-file> -maxcpucount:1 -p:EnableSourceControlManagerQueries=false > "$TMPDIR/inspect-build.log" 2>&1
-   jb inspectcode <solution-file> --no-build --output="$TMPDIR/jetbrains.sarif" --format=sarif --verbosity=WARN > "$TMPDIR/inspectcode.log" 2>&1
-   echo "inspectcode exit: $?"
-   ```
-   The scan takes ~40–90s. A clean run ends with `Inspection report was written to …` and exit 0; harmless `Warning:` lines about `.gitmodules` are expected and ignorable. Then count results: `jq '[.runs[].results[]] | length' "$TMPDIR/jetbrains.sarif"`. If >0, list them with `jq -r '.runs[].results[] | "\(.ruleId)\t\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)\t\(.message.text)"' "$TMPDIR/jetbrains.sarif"`. Treat each warning that touches a file in the diff as a Blocker; warnings only in untouched files are out of scope — mention them once as a Suggestion noting the count.
-
-   **If the tool genuinely fails to run** (non-zero exit with no SARIF, or a timeout) after following the recipe above, report it as a Blocker with the exact error output and the tail of `$TMPDIR/inspectcode.log`. Do not rationalize the failure away — but do not report the expected `.gitmodules` warnings or a successful `--no-build` run as a failure.
+If either of these steps fail to run, report a Blocker with the failure message as evidence. If they run but report warnings, report each warning as a Blocker with the analyser's message as evidence. If they run and report no warnings, report a PASS for that tool.
 
 ## Output
 
@@ -52,7 +36,7 @@ Section-file format:
 
 ## C# Toolchain — Inspections
 
-[One line: PASS (0 warnings) or FAIL (N warnings, M touching the diff). If FAIL, list the rule IDs with counts; per-warning detail goes in the Blockers below for diff-touching ones, or a single Suggestion noting the untouched-file warnings.]
+[One line: PASS (0 warnings) or FAIL (N warnings, M touching the diff). If FAIL, list the rule IDs with counts; per-warning detail goes in the Blockers below.]
 
 ## C# Toolchain — Blockers
 
