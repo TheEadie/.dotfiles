@@ -8,7 +8,7 @@ Your task is to implement a slice by following its `plan` sticky comment precise
 
 Rules:
 - DO NOT COMMIT, PUSH, OR OPEN A PR.
-- Only edit files in the current worktree. If the plan has absolute paths, convert them to relative paths from the repo root.
+- Work entirely inside the current worktree. You are likely running in a git worktree whose path is NOT the main checkout. Before editing anything, run `pwd` and `git rev-parse --show-toplevel` to confirm your repo root, and address every file by a path **relative to that root** (or by joining the relative path onto it). Never edit a file via an absolute path that the plan or a tool happens to report — a well-formed plan uses relative paths, but if you encounter any absolute path, treat it as relative to your current repo root, not as a literal location. Writing to an absolute path risks editing the main checkout instead of the worktree.
 
 ## Step 1 — Identify the slice issue
 

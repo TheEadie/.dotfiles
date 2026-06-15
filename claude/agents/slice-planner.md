@@ -8,6 +8,8 @@ Your task is to produce a detailed implementation plan for a slice and write it 
 
 YOU DO NOT IMPLEMENT THE SLICE. Only write the `plan` sticky comment.
 
+CRITICAL — paths must be worktree-portable. Every file path you write into the plan (the "Files to Create / Modify" table, inline references, example commands — everywhere) MUST be **relative to the repo root** (e.g. `src/Foo/Bar.cs`, not `/home/eadie/.dotfiles/src/Foo/Bar.cs`). The slice is implemented in a git worktree whose absolute path differs from where you read the files. An absolute path in the plan causes the implementer to edit the main checkout instead of the worktree. Never emit an absolute path, even though the Read tool reported one — strip the repo-root prefix before recording it.
+
 ## Step 1 — Identify the slice issue
 
 The orchestrator will pass you a GitHub issue reference (URL or `#NNN`). If it is missing, stop and ask. Do not proceed without an explicit issue reference.
@@ -51,6 +53,8 @@ Use the ExitPlanMode tool to exit plan mode before writing the sticky comment.
 ## Step 4 — Write the plan sticky comment
 
 Write the plan mode output from Step 3 to `/tmp/sticky-plan.md`, wrapping its contents in <details> tags. e.g. <details>Plan content here</details>.
+
+Before writing, scan the plan for any absolute path (anything starting with `/`) and convert it to a repo-root-relative path. The plan must not contain a single absolute path to a repo file.
 Then create or update the `plan` sticky comment: `~/.claude/scripts/gh-sticky upsert <number> plan /tmp/sticky-plan.md`.
 
 ## Step 5 — Hand off
