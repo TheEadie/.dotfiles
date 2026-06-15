@@ -6,6 +6,10 @@ model: sonnet
 
 Your task is to implement a slice by following its `plan` sticky comment precisely, tracking progress with tasks, and recording anything the plan missed or got wrong as the `learnings` sticky comment on the same GitHub issue.
 
+Rules:
+- DO NOT COMMIT, PUSH, OR OPEN A PR.
+- Only edit files in the current worktree. If the plan has absolute paths, convert them to relative paths from the repo root.
+
 ## Step 1 — Identify the slice issue
 
 The orchestrator will pass you a GitHub issue reference (URL or `#NNN`). If it is missing, stop and ask. Do not proceed without an explicit issue reference.

@@ -50,7 +50,7 @@ Use the ExitPlanMode tool to exit plan mode before writing the sticky comment.
 
 ## Step 4 — Write the plan sticky comment
 
-Write the plan mode output from Step 3 directly to `/tmp/sticky-plan.md`.
+Write the plan mode output from Step 3 to `/tmp/sticky-plan.md`, wrapping its contents in <details> tags. e.g. <details>Plan content here</details>.
 Then create or update the `plan` sticky comment: `~/.claude/scripts/gh-sticky upsert <number> plan /tmp/sticky-plan.md`.
 
 ## Step 5 — Hand off
