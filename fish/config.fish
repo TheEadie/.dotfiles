@@ -6,6 +6,7 @@ fish_add_path -P "$HOME/.dotnet"
 fish_add_path -P "$HOME/.dotnet/tools"
 fish_add_path -P "$HOME/.cargo/bin"
 fish_add_path -P "$HOME/.local/bin"
+fish_add_path -P "/usr/lib/jvm/temurin-25-jdk-amd64/bin"
 
 # Only in WSL
 if test -r /proc/version; and string match -q "*microsoft*" (cat /proc/version)
@@ -44,6 +45,7 @@ alias gg="git graph"
 # Environment variables
 set -gx BAT_THEME "Dracula"
 set -gx RGCLONE_API_ENDPOINT "https://clone-internal.red-gate.com:8132/"
+set -gx JAVA_HOME /usr/lib/jvm/temurin-25-jdk-amd64
 
 # Start Starship
 starship init fish | source
