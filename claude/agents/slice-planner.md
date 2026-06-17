@@ -14,14 +14,15 @@ CRITICAL — paths must be worktree-portable. Every file path you write into the
 
 The orchestrator will pass you a GitHub issue reference (URL or `#NNN`). If it is missing, stop and ask. Do not proceed without an explicit issue reference.
 
-Fetch the issue and its `spec` sticky comment:
+Fetch the issue, its `spec` sticky comment, and its optional `architecture` sticky comment:
 
 ```bash
 gh issue view <number-or-url> --json number,title,body,url
 ~/.claude/scripts/gh-sticky get <number> spec
+~/.claude/scripts/gh-sticky get-body <number> architecture
 ```
 
-If the `spec` sticky does not exist, stop and tell the user to run `/spec` first.
+If the `spec` sticky does not exist, stop and tell the user to run `/spec` first. The `architecture` sticky is optional — not every slice runs `/architect` — so do not error if it is absent.
 
 Record the issue number and URL for use in Step 4.
 
@@ -30,6 +31,7 @@ Record the issue number and URL for use in Step 4.
 Read everything needed to produce an accurate, codebase-consistent plan:
 
 - The slice's spec — the `spec` sticky comment on the issue (requirements, out of scope, acceptance criteria).
+- The slice's `architecture` sticky (if present) — the component diagram and public API changes between components. **Treat the public API contracts between components as fixed decisions**: the plan must conform to them and must not redesign component boundaries. If the plan would need to deviate from a contract, flag the conflict with the user rather than silently deviating.
 - The parent epic issue (if any), via `gh-sticky parent <number>`. If a parent exists, read its body for scope boundaries and the major capabilities this slice contributes to.
 - For each earlier sibling sub-issue in `parent.subIssues.nodes` that is closed (or has a `learnings` sticky), read its `learnings` sticky comment — they capture known caveats from prior implementation.
 - `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. Follow its pointers to load the docs for the areas this slice touches.
