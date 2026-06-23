@@ -56,12 +56,14 @@ Pass it:
 - The issue URL/number `<issue>`.
 - The base branch (default `main`) and the current branch.
 
-## Step 6 — Hand off
+## Step 6 — Open the pull request
 
-Relay the review coordinator's compact summary to the user:
+Invoke the `pr` skill (via the Skill tool) to commit, push, and open the pull request from the worktree branch. Instruct it to open the PR **as a draft** so the author can review it before marking it ready for review.
+
+## Step 7 — Hand off
+
+Relay a compact summary to the user:
 - How many review iterations ran and whether the loop converged or hit the 3-iteration cap
 - How many findings the loop auto-fixed (and any that `slice-fixer` reported as Deviated or Skipped)
 - Whether any unresolved Blockers or pending findings remain (visible in the `review` sticky)
-- Next step: run `/pr` to create the pull request
-
-Do not commit, push, or open a PR — the user triggers that.
+- The URL of the draft pull request, and that it is theirs to review and mark ready when satisfied
