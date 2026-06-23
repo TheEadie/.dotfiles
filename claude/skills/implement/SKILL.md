@@ -22,25 +22,31 @@ Fetch the issue and inspect its sticky comments (using the operations above) to 
 - `spec` sticky exists but no `plan` sticky → planning + implementing + review-fix loop
 - `plan` sticky exists but no `learnings` sticky → implementing + review-fix loop
 - `learnings` sticky exists but no `review` sticky → review-fix loop
-- All three stickies (`plan`, `learnings`, `review`) exist → nothing left to run; go straight to Step 5 (hand off) against the existing `review` sticky
+- All three stickies (`plan`, `learnings`, `review`) exist → nothing left to run; go straight to Step 6 (hand off) against the existing `review` sticky
 
 If no `spec` sticky exists AND no `plan` sticky exists, stop and tell the user to run `/spec` against this issue first.
 
 Record the issue URL and number as `<issue>` for use below. Proceed immediately without asking the user to confirm.
 
-## Step 2 — Plan phase
+## Step 2 — Create the worktree
+
+Skip if there is nothing left to run (the `plan`, `learnings`, and `review` stickies all already exist — i.e. Step 1 sent you straight to hand off).
+
+Create an isolated git worktree for this slice with the `EnterWorktree` tool. Derive a short, descriptive kebab-case name from the issue's title/feature (e.g. `add-csv-export`, `fix-login-redirect`), not the issue number. All subsequent phases run inside this worktree. Do not exit the worktree — leave it intact so the user can review, run `/pr`, and clean it up when done.
+
+## Step 3 — Plan phase
 
 Skip if the `plan` sticky comment already exists on the issue.
 
 Dispatch the `slice-planner` agent (via the Agent tool with `subagent_type: "slice-planner"`), passing the issue URL/number `<issue>` in the prompt.
 
-## Step 3 — Implement phase
+## Step 4 — Implement phase
 
 Skip if the `learnings` sticky comment already exists on the issue.
 
 Dispatch the `slice-implementer` agent (via the Agent tool with `subagent_type: "slice-implementer"`), passing the issue URL/number `<issue>` in the prompt.
 
-## Step 4 — Review-and-fix loop
+## Step 5 — Review-and-fix loop
 
 Skip this entire step if the `review` sticky comment already exists on the issue.
 
@@ -50,7 +56,7 @@ Pass it:
 - The issue URL/number `<issue>`.
 - The base branch (default `main`) and the current branch.
 
-## Step 5 — Hand off
+## Step 6 — Hand off
 
 Relay the review coordinator's compact summary to the user:
 - How many review iterations ran and whether the loop converged or hit the 3-iteration cap
