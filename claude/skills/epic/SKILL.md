@@ -1,6 +1,6 @@
 ---
 name: epic
-description: Turn a large feature description into a high-level epic spec on a GitHub issue, with a slice breakdown as GitHub sub-issues
+description: Turn a large feature description into a high-level epic spec on a GitHub issue, with a story breakdown as GitHub sub-issues
 effort: high
 disable-model-invocation: true
 ---
@@ -8,9 +8,9 @@ disable-model-invocation: true
 Your task is to collaborate with the user to produce a high-level epic on GitHub:
 
 - A **parent issue** whose body holds the project-level specification (purpose, scope, capabilities, shape).
-- One **sub-issue per slice** in the delivery plan, linked to the parent via GitHub's native sub-issue relationship.
+- One **sub-issue per story** in the delivery plan, linked to the parent via GitHub's native sub-issue relationship.
 
-The parent issue body describes *what the epic is*; the ordered list of sub-issues describes *how it will be delivered as a sequence of PR-sized slices*. Neither prescribes implementation detail.
+The parent issue body describes *what the epic is*; the ordered list of sub-issues describes *how it will be delivered as a sequence of PR-sized stories*. Neither prescribes implementation detail.
 
 This is a multi-phase, conversational process. You and the user will iterate on the issue body together. Do not rush to a final draft; the value is in the conversation.
 
@@ -27,20 +27,20 @@ The parent issue body is concerned with:
 
 Each sub-issue is concerned with:
 
-- A single **vertical tracer-bullet slice** that cuts end-to-end through every relevant layer, small enough to be a single PR, described at a "what is delivered" level
+- A single **vertical tracer-bullet story** that cuts end-to-end through every relevant layer, small enough to be a single PR, described at a "what is delivered" level
 
 Nothing here is concerned with:
 
 - Implementation details (class names, function signatures, file paths, code structure, libraries, frameworks unless the user has explicitly anchored on one)
 - Edge cases, error handling specifics, validation rules
-- Concerns that will naturally be refined when individual slices are picked up via `/spec`
+- Concerns that will naturally be refined when individual stories are picked up via `/spec`
 - Target users / personas — deliberately omitted from this command
 
-When in doubt, defer detail to the slice-implementation stage. Better to leave something coarse than to over-specify.
+When in doubt, defer detail to the story-implementation stage. Better to leave something coarse than to over-specify.
 
 ## YOU DO NOT IMPLEMENT THE EPIC
 
-Your only outputs are the parent GitHub issue body and the slice sub-issues. Do not write source code, scaffolding, configuration, or any other artifact during this command.
+Your only outputs are the parent GitHub issue body and the story sub-issues. Do not write source code, scaffolding, configuration, or any other artifact during this command.
 
 ---
 
@@ -128,49 +128,49 @@ Do **not** ask about target users / personas — that section is intentionally o
 
 Apply the following discipline throughout:
 
-- If the user gives an answer that drifts into implementation detail or edge cases, gently steer back to the high-level intent and note the detail as something for the slice stage.
+- If the user gives an answer that drifts into implementation detail or edge cases, gently steer back to the high-level intent and note the detail as something for the story stage.
 - If an answer expands scope, surface the expansion explicitly and ask whether it belongs in this epic or a later one.
 - If you cannot resolve an ambiguity in conversation, capture it under "Open Questions" rather than guessing.
 - Default to the simplest framing. If the user volunteers complexity that is not strictly required to describe the epic, ask whether it can be deferred.
 
 Continue until the user agrees every section is in a state they are happy with, or has explicitly chosen to leave a question open.
 
-## Phase 5 — Slice breakdown as sub-issues
+## Phase 5 — Story breakdown as sub-issues
 
-Once the parent issue body is stable, derive the ordered slice list from the Major Capabilities.
+Once the parent issue body is stable, derive the ordered story list from the Major Capabilities.
 
-Break the plan into **tracer bullet** slices. Each slice is a thin **vertical** cut that goes through ALL integration layers end-to-end — NOT a horizontal slice of one layer.
+Break the plan into **tracer bullet** stories. Each story is a thin **vertical** cut that goes through ALL integration layers end-to-end — NOT a horizontal story of one layer.
 
-- Each slice delivers a narrow but COMPLETE path through every relevant layer (e.g. schema, API, UI, tests — whichever layers this epic has).
-- A completed slice is demoable or verifiable on its own.
-- Prefer many thin slices over few thick ones.
-- Do not produce slices like "build the database schema", "build the API", "build the UI" — those are horizontal layers. Instead, produce slices like "user can create and view a single foo end-to-end", which forces a sliver of schema + API + UI + tests in one PR.
+- Each story delivers a narrow but COMPLETE path through every relevant layer (e.g. schema, API, UI, tests — whichever layers this epic has).
+- A completed story is demoable or verifiable on its own.
+- Prefer many thin stories over few thick ones.
+- Do not produce stories like "build the database schema", "build the API", "build the UI" — those are horizontal layers. Instead, produce stories like "user can create and view a single foo end-to-end", which forces a sliver of schema + API + UI + tests in one PR.
 
 Apply these additional principles:
 
-- **Granularity:** each slice should be small enough to be developed and shipped as a single PR. If a capability is large, split it into multiple vertical slices (e.g. by entity, by sub-capability, by happy-path vs edge case) — never by layer.
-- **Ordering:** sequence slices by dependency. Foundational scaffolding that is genuinely cross-cutting (e.g. project skeleton, CI) may come first, but keep it minimal — push as much as possible into the vertical slices themselves.
-- **High-level only:** describe each slice in one short sentence that captures *what* it delivers end-to-end, not *how* it works. No class names, file paths, method signatures, or implementation details.
+- **Granularity:** each story should be small enough to be developed and shipped as a single PR. If a capability is large, split it into multiple vertical stories (e.g. by entity, by sub-capability, by happy-path vs edge case) — never by layer.
+- **Ordering:** sequence stories by dependency. Foundational scaffolding that is genuinely cross-cutting (e.g. project skeleton, CI) may come first, but keep it minimal — push as much as possible into the vertical stories themselves.
+- **High-level only:** describe each story in one short sentence that captures *what* it delivers end-to-end, not *how* it works. No class names, file paths, method signatures, or implementation details.
 - **Complete coverage:** every capability described in the parent issue must be reachable by following the list. Do not omit capabilities or silently defer them.
-- **Respect non-goals:** do not include slices the parent issue explicitly excludes.
+- **Respect non-goals:** do not include stories the parent issue explicitly excludes.
 
-Before creating any sub-issues, present the proposed slice list to the user as a numbered list and ask:
+Before creating any sub-issues, present the proposed story list to the user as a numbered list and ask:
 
 1. Is the ordering correct?
-2. Are any slices missing, or should any be merged or split?
-3. Is any slice secretly a horizontal layer (e.g. "build the schema", "build the API") that needs reshaping into a vertical end-to-end cut?
-4. Are any slices out of scope (i.e. described in the parent issue's non-goals)?
+2. Are any stories missing, or should any be merged or split?
+3. Is any story secretly a horizontal layer (e.g. "build the schema", "build the API") that needs reshaping into a vertical end-to-end cut?
+4. Are any stories out of scope (i.e. described in the parent issue's non-goals)?
 
-Incorporate their feedback. Then, **in the agreed order**, create one sub-issue per slice and link it to the parent using the GitHub sub-issues API:
+Incorporate their feedback. Then, **in the agreed order**, create one sub-issue per story and link it to the parent using the GitHub sub-issues API:
 
 ```bash
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 PARENT=<parent-issue-number>
 
-# For each slice, in order:
+# For each story, in order:
 CHILD_URL=$(gh issue create \
-  --title "<slice short name>" \
-  --body-file /tmp/slice-body.md)
+  --title "<story short name>" \
+  --body-file /tmp/story-body.md)
 CHILD_NUMBER=${CHILD_URL##*/}
 
 # Get the REST database id for the child (the sub-issues endpoint takes the id, not the number)
@@ -180,11 +180,11 @@ CHILD_ID=$(gh api "repos/$REPO/issues/$CHILD_NUMBER" --jq .id)
 gh api -X POST "repos/$REPO/issues/$PARENT/sub_issues" -F sub_issue_id=$CHILD_ID
 ```
 
-Use the sub-issue body template below — one sentence describing what is delivered end-to-end, plus a back-pointer to the parent. The sub-issue body is intentionally minimal; running `/spec #<sub-issue-number>` later will overwrite it with a full slice spec.
+Use the sub-issue body template below — one sentence describing what is delivered end-to-end, plus a back-pointer to the parent. The sub-issue body is intentionally minimal; running `/spec #<sub-issue-number>` later will overwrite it with a full story spec.
 
 If the `sub_issues` POST fails (for example, the repository has not enabled the sub-issues feature), stop and report this to the user rather than falling back to a checklist in the parent body — surfacing the failure is more useful than silently degrading.
 
-After all sub-issues are created, tell the user the slice list is in place and share the parent issue URL so they can verify the sub-issue panel renders correctly on GitHub.
+After all sub-issues are created, tell the user the story list is in place and share the parent issue URL so they can verify the sub-issue panel renders correctly on GitHub.
 
 ## Phase 6 — Final review
 
@@ -197,7 +197,7 @@ When the user signals they are done iterating:
    - The sub-issues are in dependency order.
 3. Check the parent body for internal consistency, unfilled `_TBD_` markers, and any sections that drift into implementation detail.
 4. Surface any issues to the user and offer to fix them, or accept them as deliberate.
-5. Do NOT commit, branch, or open a PR. Tell the user the epic and slice sub-issues are ready and let them decide what to do next (typically `/spec #<sub-issue-number>` on the first slice).
+5. Do NOT commit, branch, or open a PR. Tell the user the epic and story sub-issues are ready and let them decide what to do next (typically `/spec #<sub-issue-number>` on the first story).
 
 ---
 
@@ -222,7 +222,7 @@ Use this structure when writing the parent issue body. Section headings are fixe
 
 ## Major Capabilities
 
-[Bulleted list of the main things the system can do, at a high level. Each item should be a coherent capability, not a single screen or function. Detail belongs in the slices.]
+[Bulleted list of the main things the system can do, at a high level. Each item should be a coherent capability, not a single screen or function. Detail belongs in the stories.]
 
 ## System Shape
 
@@ -247,15 +247,15 @@ Use this structure when writing the parent issue body. Section headings are fixe
 
 ## Sub-issue body template
 
-Each slice sub-issue starts as a one-sentence stub. The body will be overwritten with a full spec by `/spec` later — this is intentional.
+Each story sub-issue starts as a one-sentence stub. The body will be overwritten with a full spec by `/spec` later — this is intentional.
 
 ```markdown
-[One sentence describing what this slice delivers end-to-end.]
+[One sentence describing what this story delivers end-to-end.]
 ```
 
 Do **not** add a `Part of #<parent>` line — the parent/child link is established by the `sub_issues` API call and is visible in GitHub's sub-issues panel; downstream commands query that relationship via GraphQL rather than parsing the body.
 
-The sub-issue **title** is the slice's short name (meaningful enough that the user can identify it at a glance and that conveys the end-to-end capability it delivers — e.g. "Create-and-view foo", "Seeded RNG produces reproducible run", "Slack announce on game end"). It is not prefixed with a number; ordering is conveyed by sub-issue creation order and by the GitHub sub-issues panel on the parent.
+The sub-issue **title** is the story's short name (meaningful enough that the user can identify it at a glance and that conveys the end-to-end capability it delivers — e.g. "Create-and-view foo", "Seeded RNG produces reproducible run", "Slack announce on game end"). It is not prefixed with a number; ordering is conveyed by sub-issue creation order and by the GitHub sub-issues panel on the parent.
 
 ## Rules for the parent issue body
 
@@ -263,14 +263,14 @@ The sub-issue **title** is the slice's short name (meaningful enough that the us
 - Never invent detail the user did not give you. If a section cannot be filled, mark it `_TBD_` and resolve it through conversation.
 - Do not include implementation details, library choices, code structure, or edge-case handling.
 - Do not include time estimates, milestones, or roadmaps unless the user explicitly asks for them.
-- Every Major Capability should be self-contained enough that a future slice spec could be written against it.
+- Every Major Capability should be self-contained enough that a future story spec could be written against it.
 - Re-render the full body to the temp file and `gh issue edit --body-file` on each update. Do not let the issue drift behind the conversation.
 
 ## Rules for sub-issues
 
 - Each sub-issue is a vertical tracer bullet — a thin end-to-end cut through every relevant layer, demoable on its own.
-- Reject any slice whose title or description implies a single horizontal layer (e.g. "database schema", "API endpoints", "UI components"). Reshape it into vertical end-to-end slices.
+- Reject any story whose title or description implies a single horizontal layer (e.g. "database schema", "API endpoints", "UI components"). Reshape it into vertical end-to-end stories.
 - Each sub-issue body is exactly one sentence. No section headings, sub-lists, back-pointer lines, or other commentary — the parent link is the `sub_issues` API call, not text in the body.
 - Do not add sub-issues not derivable from the parent body.
-- Do not close sub-issues during `/epic`. Slices are closed when their PR merges, not when their spec is drafted.
+- Do not close sub-issues during `/epic`. Stories are closed when their PR merges, not when their spec is drafted.
 - Create sub-issues in dependency order: every issue created earlier must be completable before issues created later.

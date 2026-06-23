@@ -1,17 +1,17 @@
 ---
 name: architect
-description: Turn a slice's spec into a reviewable architecture artifact — a mermaid component diagram and the public API changes between components — written as a sticky comment on the issue
+description: Turn a story's spec into a reviewable architecture artifact — a mermaid component diagram and the public API changes between components — written as a sticky comment on the issue
 effort: high
 disable-model-invocation: true
 ---
 
-Your task is to turn a slice's spec into a reviewable architecture artifact and write it as the `architecture` sticky comment on the issue. The artifact describes the **public API changes between the components** the work touches, plus a component diagram — it is reviewed by a colleague (human or AI) before implementation, so it must be unambiguous and complete.
+Your task is to turn a story's spec into a reviewable architecture artifact and write it as the `architecture` sticky comment on the issue. The artifact describes the **public API changes between the components** the work touches, plus a component diagram — it is reviewed by a colleague (human or AI) before implementation, so it must be unambiguous and complete.
 
 This skill sits between `/spec` (the *what*) and `/implement` (the *how* inside each component). Your job is the seam in between: the component boundaries and the public contracts that cross them. You stay at the boundary — what happens *inside* a component is an implementation detail and belongs to the implementation plan, not here.
 
 YOU DO NOT IMPLEMENT THE USER'S REQUEST. Only write the `architecture` sticky comment to the GitHub issue.
 
-## Step 1 — Identify the slice issue
+## Step 1 — Identify the story issue
 
 Scan the user's request for a GitHub issue reference (a full GitHub issue URL, or a `#NNN` token). If none is present, stop and ask the user which issue this is for. Do not proceed without an explicit issue reference.
 
@@ -25,7 +25,7 @@ Record the issue number and URL for use in Step 4.
 
 ## Step 2 — Read the spec and learn the codebase context
 
-Read the slice's spec from the `spec` sticky comment:
+Read the story's spec from the `spec` sticky comment:
 
 ```bash
 ~/.claude/scripts/gh-sticky get-body <number> spec
@@ -33,11 +33,11 @@ Read the slice's spec from the `spec` sticky comment:
 
 If the `spec` sticky does not exist, warn the user that no spec has been written for this issue and that running `/spec` first is strongly recommended. Then fall back to the raw issue body (from Step 1) as your statement of intent and continue — but treat the gap as a risk and flag any ambiguity it creates during the interview.
 
-Before designing anything, read the following to understand how the slice fits the existing system and, critically, **where the existing component boundaries are** — the diagram must reflect reality:
+Before designing anything, read the following to understand how the story fits the existing system and, critically, **where the existing component boundaries are** — the diagram must reflect reality:
 
 - The root `CLAUDE.md` — use it as an index. It should point to any steering docs (architecture, component docs, coding guidelines) relevant to this area. Read whichever apply, especially architecture/component docs.
-- The source of the components the slice touches — enough to know each component's current public surface (what it already exposes to its neighbours).
-- Query the slice's parent epic with the `gh-sticky` helper (run with no args for usage — use it for all sticky-comment and issue-tree access, never chain `gh api` calls inline):
+- The source of the components the story touches — enough to know each component's current public surface (what it already exposes to its neighbours).
+- Query the story's parent epic with the `gh-sticky` helper (run with no args for usage — use it for all sticky-comment and issue-tree access, never chain `gh api` calls inline):
 
 ```bash
 ~/.claude/scripts/gh-sticky parent <number>
@@ -49,7 +49,7 @@ When reasoning about boundaries and which dependencies cross them, use the deep-
 
 ## Step 3 — Grill the user on the component boundaries and public APIs
 
-Interview the user relentlessly about the architecture of this slice until you reach a shared understanding. Walk down each branch of the decision tree, resolving dependencies between decisions one-by-one. Follow each branch where it leads — if defining one component's contract surfaces a question about another's, chase it down then rather than deferring it to a later "round".
+Interview the user relentlessly about the architecture of this story until you reach a shared understanding. Walk down each branch of the decision tree, resolving dependencies between decisions one-by-one. Follow each branch where it leads — if defining one component's contract surfaces a question about another's, chase it down then rather than deferring it to a later "round".
 
 **How to ask:**
 
@@ -65,7 +65,7 @@ Interview the user relentlessly about the architecture of this slice until you r
 - **Public API surface between components** — for each edge in the diagram: the new or changed contract (method/endpoint/event/message signature) that one component exposes to another, including its inputs, outputs, and error shape. The names of the types that cross the boundary are in scope; the internal classes and functions that produce them are not.
 - **Contract edge cases** — versioning and backward compatibility of any changed contract; how failures are represented across the boundary; whether each contract is synchronous or asynchronous. Stay at the boundary — do not specify how a component handles these internally.
 
-For each item the slice touches, confirm the boundary behaviour — do not leave it as "TBD". If something genuinely doesn't apply (e.g. no new contract is introduced because the change is internal to one component), note that and move on.
+For each item the story touches, confirm the boundary behaviour — do not leave it as "TBD". If something genuinely doesn't apply (e.g. no new contract is introduced because the change is internal to one component), note that and move on.
 
 **Scope and deferral sweep.** When you believe you're done, review every answer and ask yourself: are there remaining ambiguities, implicit assumptions, or "it depends" answers about the boundaries that have not been pinned down? If yes, ask those questions now (one at a time, with a recommended answer). Repeat the sweep until the answer is no.
 
@@ -104,7 +104,7 @@ A **structural** view: every node is a deployable/structural unit, every edge is
 - **Edges** are transports: label each with the mechanism, and where useful what crosses it — e.g. `HTTP POST /releases`, `static JSON import (build-time)`, `message/event`, `DB query`, `in-process call`. An unlabelled edge is a smell; name the transport.
 - **Colour** marks new / modified / untouched via the classDefs below. Mark every node.
 
-Keep the diagram to the units this slice actually touches plus their immediate untouched neighbours. If it grows past ~6–8 nodes, you have probably dropped below the component boundary — pull that detail up into *Public API Changes* prose. The example below is the whole structure for a backend→file→frontend slice; that is the altitude to aim for.
+Keep the diagram to the units this story actually touches plus their immediate untouched neighbours. If it grows past ~6–8 nodes, you have probably dropped below the component boundary — pull that detail up into *Public API Changes* prose. The example below is the whole structure for a backend→file→frontend story; that is the altitude to aim for.
 
 ```mermaid
 graph LR
@@ -141,7 +141,7 @@ questions; go back to Step 3.]
 ### Rules for the artifact content
 
 - Describe the contracts **between** components, never the logic **inside** them.
-- A component's internal class names, function signatures, algorithms, and data structures are out of bounds — those belong in the implementation plan (`slice-planner`'s job).
+- A component's internal class names, function signatures, algorithms, and data structures are out of bounds — those belong in the implementation plan (`story-planner`'s job).
 - **Diagram nodes are structural units only** — projects, executables/services, on-disk files & datastores, external systems. Classes, types, hooks, and UI elements are *not* nodes; if they matter, name them in the *Public API Changes* prose. The contract-field detail (which new field, which type) goes in prose and at most as a short edge label — never as its own node.
 - **Every diagram edge is a transport** and must be labelled with its mechanism (HTTP, static file import, message/event, DB query, in-process call, …).
 - Mark every node in the diagram as new, modified, or untouched.
