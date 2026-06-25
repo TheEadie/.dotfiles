@@ -47,6 +47,16 @@ set -gx BAT_THEME "Dracula"
 set -gx RGCLONE_API_ENDPOINT "https://clone-internal.red-gate.com:8132/"
 set -gx JAVA_HOME /usr/lib/jvm/temurin-25-jdk-amd64
 
+# .NET SDK location (so build scripts/tools that read these env vars find it)
+set -gx DOTNET_ROOT "$HOME/.dotnet"
+set -gx DOTNET_PATH "$HOME/.dotnet"
+
+# Activate a default node via nvm on every interactive shell.
+# (conf.d/nvm.fish is lazy and only auto-activates when nvm_default_version is set.)
+if status is-interactive
+    nvm use --silent lts 2>/dev/null
+end
+
 # Start Starship
 starship init fish | source
 
