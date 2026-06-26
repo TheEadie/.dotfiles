@@ -35,7 +35,7 @@ If the `spec` sticky does not exist, warn the user that no spec has been written
 
 Before designing anything, read the following to understand how the story fits the existing system and, critically, **where the existing component boundaries are** — the diagram must reflect reality:
 
-- The root `CLAUDE.md` — use it as an index. It should point to any steering docs (architecture, component docs, coding guidelines) relevant to this area. Read whichever apply, especially architecture/component docs.
+- The root `CLAUDE.md` — use it as an index. It should point to any steering docs (architecture, component docs, coding guidelines) relevant to this area. Read whichever apply, especially architecture/component docs. **Required:** for every subsystem the story touches, load the patterns/steering doc `CLAUDE.md` indexes for it before diagramming (e.g. a story touching `backend/` must read `agent_docs/backend-patterns.md`) — these docs record where the real component boundaries are, which the diagram must reflect.
 - The source of the components the story touches — enough to know each component's current public surface (what it already exposes to its neighbours).
 - Query the story's parent epic with the `gh-sticky` helper (run with no args for usage — use it for all sticky-comment and issue-tree access, never chain `gh api` calls inline):
 
@@ -46,6 +46,8 @@ Before designing anything, read the following to understand how the story fits t
 This prints the `parent { … subIssues … }` JSON, or `null`. If a parent exists, read its body — the architecture must sit consistently within the epic's goals and any boundaries it has already established.
 
 When reasoning about boundaries and which dependencies cross them, use the deep-vs-shallow-module and ports-&-adapters vocabulary from `~/.claude/skills/improve-codebase-architecture/REFERENCE.md` (in-process, local-substitutable, remote-but-owned, true-external). A good boundary is a small interface hiding a large implementation.
+
+**A component is defined by its contract boundary, not its deployment unit.** A single binary, service, or package can contain *multiple* architecture blocks when its parts communicate through a durable, independently-invocable contract. The test: if two parts of one deployment unit can be invoked independently and hand state to each other through an artifact that survives across runs (a file, a table, a queue, a build-time output), then that artifact **is** a public API and the parts on either side **are** separate blocks — diagram them as distinct nodes joined by that artifact as the transport. Do not collapse them into one node just because they ship together.
 
 ## Step 3 — Grill the user on the component boundaries and public APIs
 
@@ -60,7 +62,7 @@ Interview the user relentlessly about the architecture of this story until you r
 
 **Areas to make sure you cover.** This is not a script to read through in order — it's a checklist of categories the artifact must address before you can exit this step. Use it to notice gaps the decision-tree walk would otherwise miss.
 
-- **Components in play** — which existing **structural units** the work touches: projects, executables/services, on-disk files & datastores, and external/third-party systems. These — *not* classes, functions, types, hooks, or UI elements — are the nodes of the component diagram. Establish whether any *new* unit is introduced, whether responsibilities move between units, and classify each as new / modified / untouched-but-relevant before pinning down the edges. The class/type/file-field detail that lives *inside* a unit belongs in *Public API Changes*, never as a diagram node.
+- **Components in play** — which existing **structural units** the work touches: projects, executables/services, on-disk files & datastores, and external/third-party systems. These — *not* classes, functions, types, hooks, or UI elements — are the nodes of the component diagram. Establish whether any *new* unit is introduced, whether responsibilities move between units, and classify each as new / modified / untouched-but-relevant before pinning down the edges. The class/type/file-field detail that lives *inside* a unit belongs in *Public API Changes*, never as a diagram node. **Apply the deployment-unit-≠-architecture-block test here:** if the story touches one deployment unit whose internal stages are independently invocable and hand state through a durable artifact (e.g. a pipeline binary whose phases run separately and pass files between them), decompose it into one node per stage joined by that artifact — do not represent it as a single node. The steering doc you read in Step 2 is authoritative for where those internal boundaries fall.
 - **Transports between units** — for each edge: the mechanism that carries the contract across the boundary (e.g. `HTTP POST /releases`, `static JSON import (build-time)`, `message/event`, `DB query`, `in-process call`) and what crosses it. Every edge in the diagram is a transport and must be labelled with one.
 - **Public API surface between components** — for each edge in the diagram: the new or changed contract (method/endpoint/event/message signature) that one component exposes to another, including its inputs, outputs, and error shape. The names of the types that cross the boundary are in scope; the internal classes and functions that produce them are not.
 - **Contract edge cases** — versioning and backward compatibility of any changed contract; how failures are represented across the boundary; whether each contract is synchronous or asynchronous. Stay at the boundary — do not specify how a component handles these internally.
@@ -100,7 +102,7 @@ _Generated by Claude Code._
 
 A **structural** view: every node is a deployable/structural unit, every edge is a transport.
 
-- **Nodes** are projects, executables/services, on-disk files & datastores, or external/third-party systems — *never* classes, functions, types, hooks, or individual UI elements. Use `[[Name]]` for an executable / project / service and `[(path/name)]` for an on-disk file or datastore. Show one node per real artefact (e.g. one node per result file actually changed), not a collapsed abstraction.
+- **Nodes** are projects, executables/services, on-disk files & datastores, or external/third-party systems — *never* classes, functions, types, hooks, or individual UI elements. Use `[[Name]]` for an executable / project / service and `[(path/name)]` for an on-disk file or datastore. Show one node per real artefact (e.g. one node per result file actually changed), not a collapsed abstraction. A single deployment unit whose internal stages are independently invocable and pass state through durable artefacts is **multiple** nodes — one per stage, joined by the artefact (see the deployment-unit-≠-architecture-block test in Step 2 and the pipeline example below).
 - **Edges** are transports: label each with the mechanism, and where useful what crosses it — e.g. `HTTP POST /releases`, `static JSON import (build-time)`, `message/event`, `DB query`, `in-process call`. An unlabelled edge is a smell; name the transport.
 - **Colour** marks new / modified / untouched via the classDefs below. Mark every node.
 
@@ -114,6 +116,23 @@ graph LR
   FE[["Web app (Next.js)"]]:::untouched
   BE -->|"writes file · + new field"| JSON
   JSON -->|"static JSON import (build-time)"| FE
+  classDef new fill:#d4edda,stroke:#28a745,color:#155724;
+  classDef modified fill:#fff3cd,stroke:#ffc107,color:#856404;
+  classDef untouched fill:#e2e3e5,stroke:#6c757d,color:#383d41;
+```
+
+When the story touches the *inside* of a single binary whose stages are independently invocable and hand state through durable files, decompose it — the inter-stage files are the public-API boundaries, not the binary. For example, a story that adds an enriched field consumed by one metric, where collection is untouched:
+
+```mermaid
+graph LR
+  %% one binary, but phases run independently (--skip-*) and resume from cache files → separate blocks
+  ENR[["Enrichers phase"]]:::modified
+  CACHE[("cache/pullrequest.json")]:::modified
+  MET[["Metrics phase"]]:::modified
+  OUT[("app/data/result.json")]:::modified
+  ENR -->|"writes file · + new field (resume contract)"| CACHE
+  CACHE -->|"read on --skip-collection/--skip-enrichment"| MET
+  MET -->|"writes file"| OUT
   classDef new fill:#d4edda,stroke:#28a745,color:#155724;
   classDef modified fill:#fff3cd,stroke:#ffc107,color:#856404;
   classDef untouched fill:#e2e3e5,stroke:#6c757d,color:#383d41;

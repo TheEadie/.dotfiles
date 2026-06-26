@@ -34,7 +34,8 @@ Read everything needed to produce an accurate, codebase-consistent plan:
 - The story's `architecture` sticky (if present) — the component diagram and public API changes between components. **Treat the public API contracts between components as fixed decisions**: the plan must conform to them and must not redesign component boundaries. If the plan would need to deviate from a contract, flag the conflict with the user rather than silently deviating.
 - The parent epic issue (if any), via `gh-sticky parent <number>`. If a parent exists, read its body for scope boundaries and the major capabilities this story contributes to.
 - For each earlier sibling sub-issue in `parent.subIssues.nodes` that is closed (or has a `learnings` sticky), read its `learnings` sticky comment — they capture known caveats from prior implementation.
-- `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. Follow its pointers to load the docs for the areas this story touches.
+- `CLAUDE.md` — read this first; it describes the repo structure, build system, and points to any component or steering docs relevant to this work. For **every** subsystem this story touches, you MUST load the patterns/steering doc and testing doc that `CLAUDE.md` indexes for that subsystem before planning — this is not optional. These docs carry the rules that the build, linters, and analyzers do **not** enforce (e.g. how many files a change should add, data-handling conventions, how to handle unmatched data), so they are the rules most likely to be missed and flagged in review.
+- The repo's pre-implementation checklist that `CLAUDE.md` surfaces (the recurring-review-issues / "common pitfalls" list). Treat it as a checklist the plan must satisfy.
 - The source files the story will most likely create or modify.
 
 When reading source files, record exactly what you find. Any factual claim the plan makes about existing file state — "this function is not yet registered", "the middleware block currently contains X", "this method does not exist" — must be directly verified from the file you read, not inferred or assumed from prior knowledge.
@@ -43,8 +44,9 @@ When reading source files, record exactly what you find. Any factual claim the p
 
 Use the EnterPlanMode tool to enter plan mode. Think through the full implementation before committing to any file content:
 
-- Which files need to be created, modified, or deleted, and exactly what each change entails
+- Which files need to be created, modified, or deleted, and exactly what each change entails. Before listing any **new** file, check it against the patterns doc you loaded in Step 2: if the doc tells you to extend an existing unit rather than add a parallel one, name the existing unit the change attaches to and either extend it or justify the new file explicitly. A new file is the exception that needs justifying, not the default.
 - The right sequence to make those changes (what depends on what)
+- Walk the repo's pre-implementation checklist and confirm, item by item where it applies, how the plan satisfies each rule the build/linters/analyzers won't catch. Make these affirmations visible in the plan so the implementer and reviewer can see they were considered, not assumed.
 - Non-obvious decisions left open by the spec: library versions, build system wiring, CI job names, config keys, DI registration — resolve them here
 - How to verify each piece of work is correct once done
 - Any risks or caveats the plan should call out explicitly

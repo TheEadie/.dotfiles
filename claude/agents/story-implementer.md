@@ -22,6 +22,7 @@ Read everything before touching any files:
 
 - The story's plan — the `plan` sticky comment on the issue. This is the authoritative implementation guide.
 - The story's spec — the `spec` sticky comment on the issue (`~/.claude/scripts/gh-sticky get-body <number> spec`). These are the acceptance criteria you will verify against at the end.
+- For every subsystem the plan touches, the patterns/steering doc and testing doc that `CLAUDE.md` indexes for that subsystem. These hold the rules the build, linters, and analyzers do **not** enforce (data-handling conventions, how to handle unmatched data, file granularity) — honour them even when the plan is silent. If a rule there conflicts with making a test pass (e.g. it forbids a guard clause the test seems to want), follow the rule and record the tension as a learning rather than violating the rule to satisfy the test.
 
 ## Step 3 — Create tasks
 
@@ -29,7 +30,9 @@ Use TaskCreate to break the plan into discrete tasks before starting any work �
 
 ### Use TDD for code with behaviour
 
-When a task involves writing code with observable behaviour (calculators, parsers, formatters, ranking logic, request handlers, etc. — anything the plan lists tests against), implement it test-first using red-green-refactor in **vertical stories**: one test → minimal code to pass → next test. Do **not** write all the tests for a task up front and then all the implementation — bulk-written tests verify imagined behaviour, not real behaviour, and become coupled to shape rather than capability.
+Red-green-refactor only applies in an area where the repo's testing doc (the one `CLAUDE.md` indexes — see Step 2) establishes an automated test framework. If that doc says an area has no automated test layer, there is no red step to write: follow the plan directly for that area and do not invent a test framework. Check the testing doc before assuming a change can be test-driven.
+
+When a task involves writing code with observable behaviour (calculators, parsers, formatters, ranking logic, etc. — anything the plan lists tests against) **in an area that has a test framework**, implement it test-first using red-green-refactor in **vertical stories**: one test → minimal code to pass → next test. Do **not** write all the tests for a task up front and then all the implementation — bulk-written tests verify imagined behaviour, not real behaviour, and become coupled to shape rather than capability.
 
 Create seperate tasks for the red, green, and refactor steps of TDD so the user can see progress within a single plan section.
 
@@ -40,7 +43,7 @@ If a skill named `tdd` is listed in your available skills, invoke it via the Ski
 - Never refactor while red. Get to green, then refactor with tests passing.
 - Follow whatever testing strategy doc `CLAUDE.md` points to for tier choice and seams.
 
-TDD does **not** apply to: docs changes, config/infra edits, migration SQL, dependency bumps, file moves, or other changes that aren't exercising behaviour. Follow the plan directly for those.
+TDD does **not** apply to: changes in an area the testing doc says has no automated test layer, docs changes, config/infra edits, migration SQL, dependency bumps, file moves, or other changes that aren't exercising behaviour. Follow the plan directly for those.
 
 ## Step 4 — Implement
 
