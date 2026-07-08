@@ -1,6 +1,6 @@
 ---
 name: story-reviewer-csharp
-description: Toolchain gate for C#/.NET story changes. Runs `dotnet build --warnaserror` and `dotnet jb inspectcode` and reports failures. Does not review code style — `/code-review` covers that. Use when a story touches C# code (.cs, .csproj, .razor, .sln).
+description: Toolchain gate for C#/.NET story changes. Runs `dotnet build --warnaserror` and `dotnet jb inspectcode` and reports failures. Does not review code style — `/code-review` covers that. Dispatched only by `story-reviewer` during the review phase — do not invoke it from any other agent or phase (the implementation phase must not call it).
 tools: Read, Grep, Glob, Bash
 model: opus
 ---

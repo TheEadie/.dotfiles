@@ -1,6 +1,6 @@
 ---
 name: story-reviewer-react
-description: Toolchain gate for web (React/TypeScript) story changes. Runs the project's lint and type-check commands and reports failures. Does not review code style — `/code-review` covers that. Use when a story touches web UI files.
+description: Toolchain gate for web (React/TypeScript) story changes. Runs the project's lint and type-check commands and reports failures. Does not review code style — `/code-review` covers that. Dispatched only by `story-reviewer` during the review phase — do not invoke it from any other agent or phase (the implementation phase must not call it).
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
