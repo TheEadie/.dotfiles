@@ -1,11 +1,11 @@
 ---
-name: implement
+name: factory-implement
 description: Orchestrate planning, implementation, and an automated review-fix loop for a story issue
 effort: medium
 disable-model-invocation: true
 ---
 
-You coordinate the full story workflow: plan → implement → review → hand off. Every phase runs in its own sub-agent (`story-planner`, `story-implementer`, `story-reviewer`), so this orchestrator holds almost no phase output in context. The entire review-and-fix loop — `/code-review high --fix`, the spec and toolchain reviewers, `review` sticky assembly, and the `story-fixer` ↔ rereview loop — lives inside `story-reviewer`, which returns only a compact summary. Each sub-agent's frontmatter pins the model it runs on.
+You coordinate the full story workflow: plan → implement → review → hand off. Every phase runs in its own sub-agent (`factory-planner`, `factory-implementer`, `factory-review`), so this orchestrator holds almost no phase output in context. The entire review-and-fix loop — `/code-review high --fix`, the spec and toolchain reviewers, `review` sticky assembly, and the `factory-fixer` ↔ rereview loop — lives inside `factory-review`, which returns only a compact summary. Each sub-agent's frontmatter pins the model it runs on.
 
 Sub-agents in this harness *can* spawn further sub-agents, so the review coordinator is free to run the parallel reviewer fan-out and invoke `/code-review` (which fans out internally) from inside its own context — none of that bulky output passes through this orchestrator.
 
@@ -24,7 +24,7 @@ Fetch the issue and inspect its sticky comments (using the operations above) to 
 - `learnings` sticky exists but no `review` sticky → review-fix loop
 - All three stickies (`plan`, `learnings`, `review`) exist → nothing left to run; go straight to Step 6 (hand off) against the existing `review` sticky
 
-If no `spec` sticky exists AND no `plan` sticky exists, stop and tell the user to run `/spec` against this issue first.
+If no `spec` sticky exists AND no `plan` sticky exists, stop and tell the user to run `/factory-spec` against this issue first.
 
 Record the issue URL and number as `<issue>` for use below. Proceed immediately without asking the user to confirm.
 
@@ -38,19 +38,19 @@ Create an isolated git worktree for this story with the `EnterWorktree` tool. De
 
 Skip if the `plan` sticky comment already exists on the issue.
 
-Dispatch the `story-planner` agent (via the Agent tool with `subagent_type: "story-planner"`), passing the issue URL/number `<issue>` in the prompt.
+Dispatch the `factory-planner` agent (via the Agent tool with `subagent_type: "factory-planner"`), passing the issue URL/number `<issue>` in the prompt.
 
 ## Step 4 — Implement phase
 
 Skip if the `learnings` sticky comment already exists on the issue.
 
-Dispatch the `story-implementer` agent (via the Agent tool with `subagent_type: "story-implementer"`), passing the issue URL/number `<issue>` in the prompt.
+Dispatch the `factory-implementer` agent (via the Agent tool with `subagent_type: "factory-implementer"`), passing the issue URL/number `<issue>` in the prompt.
 
 ## Step 5 — Review-and-fix loop
 
 Skip this entire step if the `review` sticky comment already exists on the issue.
 
-Dispatch the `story-reviewer` agent (via the Agent tool with `subagent_type: "story-reviewer"`). 
+Dispatch the `factory-review` agent (via the Agent tool with `subagent_type: "factory-review"`). 
 
 Pass it:
 - The issue URL/number `<issue>`.
@@ -64,6 +64,6 @@ Invoke the `pr` skill (via the Skill tool) to commit, push, and open the pull re
 
 Relay a compact summary to the user:
 - How many review iterations ran and whether the loop converged or hit the 3-iteration cap
-- How many findings the loop auto-fixed (and any that `story-fixer` reported as Deviated or Skipped)
+- How many findings the loop auto-fixed (and any that `factory-fixer` reported as Deviated or Skipped)
 - Whether any unresolved Blockers or pending findings remain (visible in the `review` sticky)
 - The URL of the draft pull request, and that it is theirs to review and mark ready when satisfied

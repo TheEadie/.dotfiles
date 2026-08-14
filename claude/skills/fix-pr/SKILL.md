@@ -5,7 +5,7 @@ effort: high
 disable-model-invocation: true
 ---
 
-You resolve outstanding review feedback on a pull request. You make *real* fixes — committed, verified, and pushed — not surface patches. You are an orchestrator: the actual edits are applied by the `story-fixer` sub-agent, so the bulk of the fixing never passes through your context. You triage, write the findings out for the fixer, then verify and commit what it lands. The house rules below are non-negotiable; follow them without being reminded.
+You resolve outstanding review feedback on a pull request. You make *real* fixes — committed, verified, and pushed — not surface patches. You are an orchestrator: the actual edits are applied by the `factory-fixer` sub-agent, so the bulk of the fixing never passes through your context. You triage, write the findings out for the fixer, then verify and commit what it lands. The house rules below are non-negotiable; follow them without being reminded.
 
 ## Step 1 — Confirm the working location
 
@@ -60,7 +60,7 @@ If any finding's intent is ambiguous (which behaviour the reviewer wants, naming
 
 ## Step 5 — Write the findings out for the fixer
 
-Assign each **Fix** finding a short stable ID (`PR1`, `PR2`, …) and write all of them to a single section file, e.g. `/tmp/review-pr.md`, in the format the `story-fixer` agent greps for — one `### <ID>` block each:
+Assign each **Fix** finding a short stable ID (`PR1`, `PR2`, …) and write all of them to a single section file, e.g. `/tmp/review-pr.md`, in the format the `factory-fixer` agent greps for — one `### <ID>` block each:
 
 ```md
 ### PR1
@@ -76,13 +76,13 @@ The `Fix:` line is where you encode the house rules for the fixer: name the **si
 
 Group the finding IDs into **commit units**: usually one finding per unit, but findings that share a single root-cause chokepoint go in one unit (a root-cause fix covering several findings is one logical commit). Work through the units **in order**. For each unit:
 
-1. **Dispatch `story-fixer`** (Agent tool, `subagent_type: "story-fixer"`), passing:
+1. **Dispatch `factory-fixer`** (Agent tool, `subagent_type: "factory-fixer"`), passing:
    - The PR URL/`#NNN` — and note that this is a *pull request*, not a story issue: there are no spec/plan/learnings stickies, so it should use `gh pr view` for context.
    - The finding IDs in this unit.
    - The section file path (`/tmp/review-pr.md`).
    - The absolute worktree path from Step 1, so it edits in the right directory.
 2. **Read its report.** It returns Fixed / Deviated / Skipped per ID and does not commit. If it reports a unit as wholly Skipped (the issue no longer exists, or the proposed fix would regress), make no commit and carry the reason to the hand-off.
-3. **Verify before committing.** Run the project's build, tests, and linting/inspections for the area touched. Discover the exact commands from the repo's `CLAUDE.md` / steering docs — do not hardcode toolchain commands in this skill. Only commit if green; if it's red, the fixer's edit is incomplete — send the failure back to a fresh `story-fixer` dispatch for the same unit rather than committing.
+3. **Verify before committing.** Run the project's build, tests, and linting/inspections for the area touched. Discover the exact commands from the repo's `CLAUDE.md` / steering docs — do not hardcode toolchain commands in this skill. Only commit if green; if it's red, the fixer's edit is incomplete — send the failure back to a fresh `factory-fixer` dispatch for the same unit rather than committing.
 4. **Commit the unit on its own.** One commit per logical fix — never a single combined commit across units. The message explains *why* (reference the review point), not just what.
 
 ## Step 7 — Push
@@ -96,6 +96,6 @@ Do **not** reply to or resolve review threads — the author handles replying an
 
 Give the user a compact summary:
 - Findings fixed, with the commit subject for each commit unit.
-- Anything `story-fixer` reported as **Deviated** (a different fix than specified) or **Skipped**, with its one-line reason.
+- Anything `factory-fixer` reported as **Deviated** (a different fix than specified) or **Skipped**, with its one-line reason.
 - Findings classified *Already addressed* or *Won't fix / discuss* in triage, with the one-line reason.
 - Confirmation the branch is pushed and green. All review threads are left for the user to reply to and resolve themselves.

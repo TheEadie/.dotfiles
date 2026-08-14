@@ -1,6 +1,6 @@
 ---
-name: story-reviewer-spec
-description: Reviews a story diff against its GitHub issue spec (the `spec` sticky comment) and `learnings` sticky comment. Reports missing or partial acceptance criteria, scope creep (changes the spec did not ask for), and asked-for behaviour that looks wrong in the implementation. Dispatched only by `story-reviewer` during the review phase — do not invoke it from any other agent or phase (the implementation phase must not call it).
+name: factory-review-spec
+description: Reviews a story diff against its GitHub issue spec (the `spec` sticky comment) and `learnings` sticky comment. Reports missing or partial acceptance criteria, scope creep (changes the spec did not ask for), and asked-for behaviour that looks wrong in the implementation. Dispatched only by `factory-review` during the review phase — do not invoke it from any other agent or phase (the implementation phase must not call it).
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

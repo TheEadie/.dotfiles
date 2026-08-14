@@ -33,7 +33,7 @@ Nothing here is concerned with:
 
 - Implementation details (class names, function signatures, file paths, code structure, libraries, frameworks unless the user has explicitly anchored on one)
 - Edge cases, error handling specifics, validation rules
-- Concerns that will naturally be refined when individual stories are picked up via `/spec`
+- Concerns that will naturally be refined when individual stories are picked up via `/factory-spec`
 - Target users / personas — deliberately omitted from this command
 
 When in doubt, defer detail to the story-implementation stage. Better to leave something coarse than to over-specify.
@@ -180,7 +180,7 @@ CHILD_ID=$(gh api "repos/$REPO/issues/$CHILD_NUMBER" --jq .id)
 gh api -X POST "repos/$REPO/issues/$PARENT/sub_issues" -F sub_issue_id=$CHILD_ID
 ```
 
-Use the sub-issue body template below — one sentence describing what is delivered end-to-end, plus a back-pointer to the parent. The sub-issue body is intentionally minimal; running `/spec #<sub-issue-number>` later will overwrite it with a full story spec.
+Use the sub-issue body template below — one sentence describing what is delivered end-to-end, plus a back-pointer to the parent. The sub-issue body is intentionally minimal; running `/factory-spec #<sub-issue-number>` later will overwrite it with a full story spec.
 
 If the `sub_issues` POST fails (for example, the repository has not enabled the sub-issues feature), stop and report this to the user rather than falling back to a checklist in the parent body — surfacing the failure is more useful than silently degrading.
 
@@ -197,7 +197,7 @@ When the user signals they are done iterating:
    - The sub-issues are in dependency order.
 3. Check the parent body for internal consistency, unfilled `_TBD_` markers, and any sections that drift into implementation detail.
 4. Surface any issues to the user and offer to fix them, or accept them as deliberate.
-5. Do NOT commit, branch, or open a PR. Tell the user the epic and story sub-issues are ready and let them decide what to do next (typically `/spec #<sub-issue-number>` on the first story).
+5. Do NOT commit, branch, or open a PR. Tell the user the epic and story sub-issues are ready and let them decide what to do next (typically `/factory-spec #<sub-issue-number>` on the first story).
 
 ---
 
@@ -247,7 +247,7 @@ Use this structure when writing the parent issue body. Section headings are fixe
 
 ## Sub-issue body template
 
-Each story sub-issue starts as a one-sentence stub. The body will be overwritten with a full spec by `/spec` later — this is intentional.
+Each story sub-issue starts as a one-sentence stub. The body will be overwritten with a full spec by `/factory-spec` later — this is intentional.
 
 ```markdown
 [One sentence describing what this story delivers end-to-end.]

@@ -1,10 +1,10 @@
 ---
-name: story-planner
-description: Generates a detailed implementation plan for a story and writes it as the `plan` sticky comment on the story's GitHub issue. Dispatched by `/implement` during the planning phase.
+name: factory-planner
+description: Generates a detailed implementation plan for a story and writes it as the `plan` sticky comment on the story's GitHub issue. Dispatched by `/factory-implement` during the planning phase.
 model: opus
 ---
 
-Your task is to produce a detailed implementation plan for a story and write it as the `plan` sticky comment on the story's GitHub issue. This plan is the direct input to the story-implementer agent, so it must be precise enough for an agent to execute without further clarification.
+Your task is to produce a detailed implementation plan for a story and write it as the `plan` sticky comment on the story's GitHub issue. This plan is the direct input to the factory-implementer agent, so it must be precise enough for an agent to execute without further clarification.
 
 YOU DO NOT IMPLEMENT THE STORY. Only write the `plan` sticky comment.
 
@@ -22,7 +22,7 @@ gh issue view <number-or-url> --json number,title,body,url
 ~/.claude/scripts/gh-sticky get-body <number> architecture
 ```
 
-If the `spec` sticky does not exist, stop and tell the user to run `/spec` first. The `architecture` sticky is optional — not every story runs `/architect` — so do not error if it is absent.
+If the `spec` sticky does not exist, stop and tell the user to run `/factory-spec` first. The `architecture` sticky is optional — not every story runs `/architect` — so do not error if it is absent.
 
 Record the issue number and URL for use in Step 4.
 

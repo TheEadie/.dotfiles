@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 Your task is to turn a story's spec into a reviewable architecture artifact and write it as the `architecture` sticky comment on the issue. The artifact describes the **public API changes between the components** the work touches, plus a component diagram — it is reviewed by a colleague (human or AI) before implementation, so it must be unambiguous and complete.
 
-This skill sits between `/spec` (the *what*) and `/implement` (the *how* inside each component). Your job is the seam in between: the component boundaries and the public contracts that cross them. You stay at the boundary — what happens *inside* a component is an implementation detail and belongs to the implementation plan, not here.
+This skill sits between `/factory-spec` (the *what*) and `/factory-implement` (the *how* inside each component). Your job is the seam in between: the component boundaries and the public contracts that cross them. You stay at the boundary — what happens *inside* a component is an implementation detail and belongs to the implementation plan, not here.
 
 YOU DO NOT IMPLEMENT THE USER'S REQUEST. Only write the `architecture` sticky comment to the GitHub issue.
 
@@ -31,7 +31,7 @@ Read the story's spec from the `spec` sticky comment:
 ~/.claude/scripts/gh-sticky get-body <number> spec
 ```
 
-If the `spec` sticky does not exist, warn the user that no spec has been written for this issue and that running `/spec` first is strongly recommended. Then fall back to the raw issue body (from Step 1) as your statement of intent and continue — but treat the gap as a risk and flag any ambiguity it creates during the interview.
+If the `spec` sticky does not exist, warn the user that no spec has been written for this issue and that running `/factory-spec` first is strongly recommended. Then fall back to the raw issue body (from Step 1) as your statement of intent and continue — but treat the gap as a risk and flag any ambiguity it creates during the interview.
 
 Before designing anything, read the following to understand how the story fits the existing system and, critically, **where the existing component boundaries are** — the diagram must reflect reality:
 
@@ -160,7 +160,7 @@ questions; go back to Step 3.]
 ### Rules for the artifact content
 
 - Describe the contracts **between** components, never the logic **inside** them.
-- A component's internal class names, function signatures, algorithms, and data structures are out of bounds — those belong in the implementation plan (`story-planner`'s job).
+- A component's internal class names, function signatures, algorithms, and data structures are out of bounds — those belong in the implementation plan (`factory-planner`'s job).
 - **Diagram nodes are structural units only** — projects, executables/services, on-disk files & datastores, external systems. Classes, types, hooks, and UI elements are *not* nodes; if they matter, name them in the *Public API Changes* prose. The contract-field detail (which new field, which type) goes in prose and at most as a short edge label — never as its own node.
 - **Every diagram edge is a transport** and must be labelled with its mechanism (HTTP, static file import, message/event, DB query, in-process call, …).
 - Mark every node in the diagram as new, modified, or untouched.
@@ -169,4 +169,4 @@ questions; go back to Step 3.]
 
 ## Step 5 — Hand off
 
-Tell the user the issue URL and that the architecture is ready for them to review, and then for implementation with `/implement` (which will treat these public API contracts as fixed). Do not commit, branch, or open a PR — the existing `/pr` skill handles that once code changes exist. Do not close the issue — it stays open until the implementing PR merges.
+Tell the user the issue URL and that the architecture is ready for them to review, and then for implementation with `/factory-implement` (which will treat these public API contracts as fixed). Do not commit, branch, or open a PR — the existing `/pr` skill handles that once code changes exist. Do not close the issue — it stays open until the implementing PR merges.

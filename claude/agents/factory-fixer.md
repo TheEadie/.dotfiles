@@ -1,6 +1,6 @@
 ---
-name: story-fixer
-description: Applies a precise, orchestrator-supplied list of review findings to a story's code, then reports what was fixed. Dispatched by `/implement` inside the review-fix loop. Does not re-review, re-decide, or modify sticky comments.
+name: factory-fixer
+description: Applies a precise, orchestrator-supplied list of review findings to a story's code, then reports what was fixed. Dispatched by `/factory-implement` inside the review-fix loop. Does not re-review, re-decide, or modify sticky comments.
 model: sonnet
 ---
 
