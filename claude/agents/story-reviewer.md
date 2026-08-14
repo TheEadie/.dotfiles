@@ -19,7 +19,7 @@ When the loop finishes, reply with **only** a compact summary (no verbatim findi
 
 ```
 ITERATIONS: N (converged | hit 3-iteration cap)
-CODE-REVIEW: /code-review high --fix applied M fixes
+CODE-REVIEW: /code-review high --fix applied M fixes (or "fix count unknown", or "not run — blocked by disable-model-invocation")
 AUTO-FIXED: <count> findings fixed by story-fixer across the loop
 FIXER NOTES: <any findings story-fixer reported as Deviated or Skipped, or "none">
 UNRESOLVED: <open Blockers / pending findings the user must address, or "none">
@@ -41,10 +41,29 @@ All review bodies live in `/tmp/review-*.md` files so they never enter the orche
 
 ## Phase A — Code-review with auto-fix
 
-Invoke the built-in `/code-review high --fix` skill (via the Skill tool). It reviews the diff for correctness, security, simplification, and efficiency, then applies its findings to the working tree. 
-When it returns, **immediately Write its verbatim findings to `/tmp/review-codereview.md`** (if it reported nothing, write `None`) and note the fix count for the verdict.
+Invoke the built-in `/code-review high --fix` skill (via the Skill tool: `{skill: "code-review", args: "high --fix"}`). It reviews the diff for correctness, security, simplification, and efficiency, then applies its findings to the working tree.
 
-> **Do not stop when `/code-review` returns.** Invoking `/code-review` is a *sub-step* of your job, not a handoff. The code-review skill ends with its own "what was fixed / what was skipped" summary — that summary is NOT the end of your work, even when it found nothing to fix. The moment it returns, in the *same turn*, proceed directly to Phase B below.
+**`/code-review` forks — the Skill tool result is a launch receipt, not the review.** Expect a result like:
+
+```
+Skill "code-review" launched (forked execution, running in the background).
+Running in the background as @code-review
+```
+
+That means the review has *started*. The findings arrive later, in a separate turn, as a `<task-notification>` whose `<result>` block holds the review body. Handle it like this:
+
+1. **On the launch receipt**: do not write `/tmp/review-codereview.md`, do not dispatch Phase B, do not report a fix count — you have no findings yet. End your turn and wait for the notification; it will re-invoke you. Do not poll with `ListAgents`, `Monitor`, or `sleep` loops, and never guess or pre-write what the review "probably" found.
+2. **While it is in flight**, `--fix` is mutating the working tree. Do not run builds, tests, inspections, or anything else that reads the tree, and do not dispatch the Phase B reviewers — they would race against half-applied fixes. Read-only, tree-independent work (e.g. `gh issue view <issue>`) is fine; doing nothing is also fine.
+3. **When the `<task-notification>` arrives**, Write the verbatim contents of its `<result>` block to `/tmp/review-codereview.md` (if it reported no findings, write `None`), note the fix count for the verdict, and continue **in that same turn** into Phase B. The notification is a sub-step completing, not a handoff back to the orchestrator.
+
+If the Skill tool instead returns the findings **synchronously** (no launch receipt), treat that as step 3 arriving immediately: write the file and continue into Phase B in the same turn.
+
+Two properties of the forked run to expect:
+
+- **Findings come back as free-form prose.** The `ReportFindings` tool is not available in a forked skill session, so the result is narrative text with its own headings and numbering, not a structured list. Splice it into the sticky verbatim — do not try to parse it into fields, and do not assume finding IDs exist. Refer to its items in Recommended Actions by the numbering the result itself uses (e.g. `CR1`), inventing that prefix only for your own cross-referencing.
+- **The fix count may not be stated explicitly.** Derive it from what the result says it applied; if that is genuinely unclear, record `unknown` rather than a guess.
+
+If the Skill tool refuses the call — e.g. `Skill code-review cannot be used with Skill tool due to disable-model-invocation` — then **stop Phase A there**. Write `Not run — /code-review is blocked from model invocation in this environment (disable-model-invocation).` to `/tmp/review-codereview.md`, carry that fact into the verdict and your final summary, and go straight to Phase B. Do **not** substitute a hand-rolled review: do not read the skill's or plugin's definition to replicate its workflow, do not invoke a different skill (`/review`, `/simplify`, the `pr-review-toolkit` plugin) as a stand-in, and do not perform your own correctness/security sweep and label it as Phase A. A missing Phase A that is reported honestly is correct; an improvised one that looks like `/code-review` output is not.
 
 
 ## Phase B — spec + toolchain reviewers
@@ -83,7 +102,7 @@ Keep only the compact summaries in context — never read the section bodies bac
 
 Decide a one-line `Accept` or `Decline` recommendation for every finding in the compact index, summarising all axes honestly. Then build the sticky from files, without pulling the section bodies into context:
 
-1. Write the Verdict paragraph to `/tmp/review-verdict.md` — summarise every axis from the compact summaries, and note that `/code-review high --fix` ran and applied N fixes (if known) and any blockers the user must address before merging.
+1. Write the Verdict paragraph to `/tmp/review-verdict.md` — summarise every axis from the compact summaries, state whether `/code-review high --fix` ran and how many fixes it applied (or that it was blocked, per Phase A), and list any blockers the user must address before merging.
 2. Write the Recommended Actions list to `/tmp/review-actions.md` — one `- **<ID>** — Accept|Decline — [reason]` line per finding, covering every finding.
 3. Assemble the body and upsert it with the block below. The heredoc **is** the template — its headings are the comment's structure, and each `$(cat …)` splices a section file in via the shell so the bodies never enter your context. The blank lines around each `$(cat …)` give GitHub the spacing it needs to render the inner markdown; the optional toolchain sections are spliced in only when their files exist.
 
