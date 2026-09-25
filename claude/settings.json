@@ -116,6 +116,10 @@
           {
             "type": "command",
             "command": "bash ~/.claude/scripts/signal.sh working"
+          },
+          {
+            "type": "command",
+            "command": "echo 'Reminder: act as an orchestrator. Delegate this task to sub-agents via the Agent tool (in parallel where independent) rather than doing the work in the main thread. Only handle trivial one-step questions directly.'"
           }
         ]
       }
@@ -207,5 +211,6 @@
     "enabled": true,
     "mode": "hold"
   },
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "model": "opus[1m]"
 }
