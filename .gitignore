@@ -13,3 +13,6 @@
 
 # Project-level Claude config (decide per-file what to commit)
 .claude/
+
+claude/skills/.trash/
+claude/skills/synced/
