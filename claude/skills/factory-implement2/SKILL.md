@@ -1,6 +1,6 @@
 ---
 name: factory-implement2
-description: Simplified story workflow — worktree, implement from the spec (and architecture), /code-review high --fix, then a draft PR
+description: Simplified story workflow — worktree, implement from the spec (and architecture) or straight from the issue for short tickets, /code-review high --fix, then a draft PR
 effort: medium
 disable-model-invocation: true
 ---
@@ -11,7 +11,7 @@ You coordinate a four-step story workflow: worktree → implement → code revie
 
 Scan the user's request for a GitHub issue reference (a full issue URL or a `#NNN` token). If none is present, stop and ask which issue to work on.
 
-Check the issue has a spec: `~/.claude/scripts/gh-sticky get-id <number> spec` prints a comment id or nothing. If there is no `spec` sticky, stop and tell the user to run `/factory-spec` against the issue first. Also note whether an `architecture` sticky exists (`gh-sticky get-id <number> architecture`).
+Check the issue has a spec: `~/.claude/scripts/gh-sticky get-id <number> spec` prints a comment id or nothing. If there is no `spec` sticky, continue in **no-spec mode**: the issue itself (title, body, and comments) is the source of requirements. This suits short tickets; if the issue is too vague to implement, the implementer will say so. Also note whether an `architecture` sticky exists (`gh-sticky get-id <number> architecture`).
 
 Fetch just the title (`gh issue view <number> --json title -q .title`) and create the worktree with the `EnterWorktree` tool, using a short kebab-case name derived from the title (e.g. `add-csv-export`), not the issue number. Do this yourself rather than in a sub-agent — `EnterWorktree` switches *this* session's working directory, and the sub-agents you dispatch next inherit it. Do not exit the worktree at the end; leave it for the user.
 
@@ -24,16 +24,16 @@ Dispatch a `general-purpose` sub-agent (Agent tool) with this prompt, filling in
 > Implement GitHub issue `<issue-url>` in the current git worktree.
 >
 > 1. Run `pwd` and `git rev-parse --show-toplevel` and work only inside that repo root. Address files by paths relative to it — never edit via an absolute path pointing at another checkout.
-> 2. Read the spec: `~/.claude/scripts/gh-sticky get-body <number> spec`. <If an architecture sticky exists:> Read the architecture: `~/.claude/scripts/gh-sticky get-body <number> architecture` — honour its component boundaries and public API contracts.
+> 2. <If a spec sticky exists:> Read the spec: `~/.claude/scripts/gh-sticky get-body <number> spec`. <In no-spec mode instead:> There is no spec — read the issue itself (`gh issue view <number> --comments`) and treat its title, body, and comments as the requirements, deriving acceptance criteria from them. If the issue is too vague to implement with confidence, stop and report what is unclear instead of guessing. <If an architecture sticky exists:> Read the architecture: `~/.claude/scripts/gh-sticky get-body <number> architecture` — honour its component boundaries and public API contracts.
 > 3. Read the root `CLAUDE.md` and the steering / testing docs it indexes for the areas you touch, and follow their conventions.
-> 4. Implement every acceptance criterion in the spec. For code with observable behaviour in an area that has a test framework, work test-first — invoke the `tdd` skill if it is available.
+> 4. Implement every acceptance criterion in the spec (or, in no-spec mode, the ones you derived from the issue). For code with observable behaviour in an area that has a test framework, work test-first — invoke the `tdd` skill if it is available.
 > 5. Run the project's build, tests, and linters for the areas you changed and get them passing.
 >
 > Do NOT commit, push, or open a PR. Do NOT run `/code-review` or any review agents — review is a separate later step.
 >
-> Reply with ONLY a compact summary: files changed (paths only), acceptance criteria met / not met, build and test status, and any decisions or deviations worth flagging. No code, no diffs.
+> Reply with ONLY a compact summary: files changed (paths only), acceptance criteria met / not met (in no-spec mode, list the criteria you derived), build and test status, and any decisions or deviations worth flagging. No code, no diffs.
 
-If the sub-agent reports that it could not implement the story (build broken, acceptance criteria unmet), stop and relay that to the user instead of continuing.
+If the sub-agent reports that it could not implement the story (build broken, acceptance criteria unmet, or the issue too vague in no-spec mode), stop and relay that to the user instead of continuing.
 
 ## Step 3 — Code review with auto-fix
 
@@ -58,7 +58,7 @@ Dispatch a `general-purpose` sub-agent with this prompt:
 ## Step 5 — Hand off
 
 Relay a short summary to the user:
-- What was implemented, and any acceptance criteria or deviations the implementer flagged
+- What was implemented, and any acceptance criteria or deviations the implementer flagged; in no-spec mode, say so and list the criteria it derived from the issue
 - Code review: findings found / fixed, and any left unfixed
 - Build/test status
 - The draft PR URL and the worktree path — the PR is theirs to review and mark ready
