@@ -160,7 +160,7 @@ questions; go back to Step 3.]
 ### Rules for the artifact content
 
 - Describe the contracts **between** components, never the logic **inside** them.
-- A component's internal class names, function signatures, algorithms, and data structures are out of bounds — those belong in the implementation plan (`factory-planner`'s job).
+- A component's internal class names, function signatures, algorithms, and data structures are out of bounds — those are decided during implementation (`/factory-implement`).
 - **Diagram nodes are structural units only** — projects, executables/services, on-disk files & datastores, external systems. Classes, types, hooks, and UI elements are *not* nodes; if they matter, name them in the *Public API Changes* prose. The contract-field detail (which new field, which type) goes in prose and at most as a short edge label — never as its own node.
 - **Every diagram edge is a transport** and must be labelled with its mechanism (HTTP, static file import, message/event, DB query, in-process call, …).
 - Mark every node in the diagram as new, modified, or untouched.

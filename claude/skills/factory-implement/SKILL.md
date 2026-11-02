@@ -1,69 +1,64 @@
 ---
 name: factory-implement
-description: Orchestrate planning, implementation, and an automated review-fix loop for a story issue
+description: Simplified story workflow — worktree, implement from the spec (and architecture) or straight from the issue for short tickets, /code-review high --fix, then a draft PR
 effort: medium
 disable-model-invocation: true
 ---
 
-You coordinate the full story workflow: plan → implement → review → hand off. Every phase runs in its own sub-agent (`factory-planner`, `factory-implementer`, `factory-review`), so this orchestrator holds almost no phase output in context. The entire review-and-fix loop — `/code-review high --fix`, the spec and toolchain reviewers, `review` sticky assembly, and the `factory-fixer` ↔ rereview loop — lives inside `factory-review`, which returns only a compact summary. Each sub-agent's frontmatter pins the model it runs on.
+You coordinate a four-step story workflow: worktree → implement → code review → draft PR. Each work step runs in its own `general-purpose` sub-agent so this orchestrator's context stays clear. Keep only each sub-agent's compact summary; never pull diffs, file contents, or review findings into your own context.
 
-Sub-agents in this harness *can* spawn further sub-agents, so the review coordinator is free to run the parallel reviewer fan-out and invoke `/code-review` (which fans out internally) from inside its own context — none of that bulky output passes through this orchestrator.
+## Step 1 — Identify the issue and create the worktree
 
-## Sticky comment operations
+Scan the user's request for a GitHub issue reference (a full issue URL or a `#NNN` token). If none is present, stop and ask which issue to work on.
 
-This orchestrator only *reads* stickies — to decide which phases still need to run; the sub-agents do all the writing. Use the `gh-sticky` helper (`~/.claude/scripts/gh-sticky`, run with no args for usage) — never chain `gh api` calls inline. To check whether a sticky exists, `gh-sticky get-id <number> <name>` prints its comment id or empty (the least context noise of the read variants).
+Check the issue has a spec: `~/.claude/scripts/gh-sticky get-id <number> spec` prints a comment id or nothing. If there is no `spec` sticky, continue in **no-spec mode**: the issue itself (title, body, and comments) is the source of requirements. This suits short tickets; if the issue is too vague to implement, the implementer will say so. Also note whether an `architecture` sticky exists (`gh-sticky get-id <number> architecture`).
 
-## Step 1 — Identify the story issue
+Fetch just the title (`gh issue view <number> --json title -q .title`) and create the worktree with the `EnterWorktree` tool, using a short kebab-case name derived from the title (e.g. `add-csv-export`), not the issue number. Do this yourself rather than in a sub-agent — `EnterWorktree` switches *this* session's working directory, and the sub-agents you dispatch next inherit it. Do not exit the worktree at the end; leave it for the user.
 
-Scan the user's request for a GitHub issue reference (a full GitHub issue URL, or a `#NNN` token). If none is present, stop and ask the user which issue to work on. Do not proceed without an explicit issue reference.
+Proceed without asking the user to confirm.
 
-Fetch the issue and inspect its sticky comments (using the operations above) to determine which phases need to run:
+## Step 2 — Implement
 
-- `spec` sticky exists but no `plan` sticky → planning + implementing + review-fix loop
-- `plan` sticky exists but no `learnings` sticky → implementing + review-fix loop
-- `learnings` sticky exists but no `review` sticky → review-fix loop
-- All three stickies (`plan`, `learnings`, `review`) exist → nothing left to run; go straight to Step 6 (hand off) against the existing `review` sticky
+Dispatch a `general-purpose` sub-agent (Agent tool) with this prompt, filling in the placeholders:
 
-If no `spec` sticky exists AND no `plan` sticky exists, stop and tell the user to run `/factory-spec` against this issue first.
+> Implement GitHub issue `<issue-url>` in the current git worktree.
+>
+> 1. Run `pwd` and `git rev-parse --show-toplevel` and work only inside that repo root. Address files by paths relative to it — never edit via an absolute path pointing at another checkout.
+> 2. <If a spec sticky exists:> Read the spec: `~/.claude/scripts/gh-sticky get-body <number> spec`. <In no-spec mode instead:> There is no spec — read the issue itself (`gh issue view <number> --comments`) and treat its title, body, and comments as the requirements, deriving acceptance criteria from them. If the issue is too vague to implement with confidence, stop and report what is unclear instead of guessing. <If an architecture sticky exists:> Read the architecture: `~/.claude/scripts/gh-sticky get-body <number> architecture` — honour its component boundaries and public API contracts.
+> 3. Read the root `CLAUDE.md` and the steering / testing docs it indexes for the areas you touch, and follow their conventions.
+> 4. Implement every acceptance criterion in the spec (or, in no-spec mode, the ones you derived from the issue). For code with observable behaviour in an area that has a test framework, work test-first — invoke the `tdd` skill if it is available.
+> 5. Run the project's build, tests, and linters for the areas you changed and get them passing.
+>
+> Do NOT commit, push, or open a PR. Do NOT run `/code-review` or any review agents — review is a separate later step.
+>
+> Reply with ONLY a compact summary: files changed (paths only), acceptance criteria met / not met (in no-spec mode, list the criteria you derived), build and test status, and any decisions or deviations worth flagging. No code, no diffs.
 
-Record the issue URL and number as `<issue>` for use below. Proceed immediately without asking the user to confirm.
+If the sub-agent reports that it could not implement the story (build broken, acceptance criteria unmet, or the issue too vague in no-spec mode), stop and relay that to the user instead of continuing.
 
-## Step 2 — Create the worktree
+## Step 3 — Code review with auto-fix
 
-Skip if there is nothing left to run (the `plan`, `learnings`, and `review` stickies all already exist — i.e. Step 1 sent you straight to hand off).
+Dispatch a `general-purpose` sub-agent with this prompt:
 
-Create an isolated git worktree for this story with the `EnterWorktree` tool. Derive a short, descriptive kebab-case name from the issue's title/feature (e.g. `add-csv-export`, `fix-login-redirect`), not the issue number. All subsequent phases run inside this worktree. Do not exit the worktree — leave it intact so the user can review, run `/pr`, and clean it up when done.
+> In the current git worktree, invoke the built-in code review skill via the Skill tool: `{skill: "code-review", args: "high --fix"}`. It reviews the uncommitted diff and applies its fixes to the working tree.
+>
+> The skill may run forked in the background: if the Skill tool returns a launch receipt ("running in the background"), end your turn and wait for the `<task-notification>` carrying its result — do not poll, do not touch the working tree while it runs, and never guess the findings. If the Skill tool refuses the call (e.g. `disable-model-invocation`), report that and stop — do not substitute your own review.
+>
+> Once the result arrives, run the project's build and tests for the changed areas to confirm the fixes didn't break anything.
+>
+> Reply with ONLY a compact summary: number of findings, number fixed, any findings left unfixed (one line each: `file:line — short title`), and build/test status after the fixes.
 
-## Step 3 — Plan phase
+## Step 4 — Open a draft pull request
 
-Skip if the `plan` sticky comment already exists on the issue.
+Dispatch a `general-purpose` sub-agent with this prompt:
 
-Dispatch the `factory-planner` agent (via the Agent tool with `subagent_type: "factory-planner"`), passing the issue URL/number `<issue>` in the prompt.
+> In the current git worktree, invoke the `pr` skill via the Skill tool with args `draft — closes <issue-url>`, and follow its instructions to commit the work, push the branch, and open the pull request **as a draft** (`gh pr create --draft`). Reference `<issue-url>` in the PR description.
+>
+> Reply with ONLY the PR URL and the list of commit subjects.
 
-## Step 4 — Implement phase
+## Step 5 — Hand off
 
-Skip if the `learnings` sticky comment already exists on the issue.
-
-Dispatch the `factory-implementer` agent (via the Agent tool with `subagent_type: "factory-implementer"`), passing the issue URL/number `<issue>` in the prompt.
-
-## Step 5 — Review-and-fix loop
-
-Skip this entire step if the `review` sticky comment already exists on the issue.
-
-Dispatch the `factory-review` agent (via the Agent tool with `subagent_type: "factory-review"`). 
-
-Pass it:
-- The issue URL/number `<issue>`.
-- The base branch (default `main`) and the current branch.
-
-## Step 6 — Open the pull request
-
-Invoke the `pr` skill (via the Skill tool) to commit, push, and open the pull request from the worktree branch. Instruct it to open the PR **as a draft** so the author can review it before marking it ready for review.
-
-## Step 7 — Hand off
-
-Relay a compact summary to the user:
-- How many review iterations ran and whether the loop converged or hit the 3-iteration cap
-- How many findings the loop auto-fixed (and any that `factory-fixer` reported as Deviated or Skipped)
-- Whether any unresolved Blockers or pending findings remain (visible in the `review` sticky)
-- The URL of the draft pull request, and that it is theirs to review and mark ready when satisfied
+Relay a short summary to the user:
+- What was implemented, and any acceptance criteria or deviations the implementer flagged; in no-spec mode, say so and list the criteria it derived from the issue
+- Code review: findings found / fixed, and any left unfixed
+- Build/test status
+- The draft PR URL and the worktree path — the PR is theirs to review and mark ready
