@@ -45,7 +45,7 @@ Before designing anything, read the following to understand how the story fits t
 
 This prints the `parent { … subIssues … }` JSON, or `null`. If a parent exists, read its body — the architecture must sit consistently within the epic's goals and any boundaries it has already established.
 
-When reasoning about boundaries and which dependencies cross them, use the deep-vs-shallow-module and ports-&-adapters vocabulary from `~/.claude/skills/improve-codebase-architecture/REFERENCE.md` (in-process, local-substitutable, remote-but-owned, true-external). A good boundary is a small interface hiding a large implementation.
+When reasoning about boundaries and which dependencies cross them, use the deep-vs-shallow-module and ports-&-adapters vocabulary from `~/.claude/skills/codebase-design/DEEPENING.md` (in-process, local-substitutable, remote-but-owned, true-external). A good boundary is a small interface hiding a large implementation.
 
 **A component is defined by its contract boundary, not its deployment unit.** A single binary, service, or package can contain *multiple* architecture blocks when its parts communicate through a durable, independently-invocable contract. The test: if two parts of one deployment unit can be invoked independently and hand state to each other through an artifact that survives across runs (a file, a table, a queue, a build-time output), then that artifact **is** a public API and the parts on either side **are** separate blocks — diagram them as distinct nodes joined by that artifact as the transport. Do not collapse them into one node just because they ship together.
 
