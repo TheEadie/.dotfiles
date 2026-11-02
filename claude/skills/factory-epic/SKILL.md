@@ -1,5 +1,5 @@
 ---
-name: epic
+name: factory-epic
 description: Turn a large feature description into a high-level epic spec on a GitHub issue, with a story breakdown as GitHub sub-issues
 effort: high
 disable-model-invocation: true
@@ -272,5 +272,5 @@ The sub-issue **title** is the story's short name (meaningful enough that the us
 - Reject any story whose title or description implies a single horizontal layer (e.g. "database schema", "API endpoints", "UI components"). Reshape it into vertical end-to-end stories.
 - Each sub-issue body is exactly one sentence. No section headings, sub-lists, back-pointer lines, or other commentary — the parent link is the `sub_issues` API call, not text in the body.
 - Do not add sub-issues not derivable from the parent body.
-- Do not close sub-issues during `/epic`. Stories are closed when their PR merges, not when their spec is drafted.
+- Do not close sub-issues during `/factory-epic`. Stories are closed when their PR merges, not when their spec is drafted.
 - Create sub-issues in dependency order: every issue created earlier must be completable before issues created later.

@@ -102,7 +102,7 @@ gh issue create --title "<title>" --body-file /tmp/diagnose-issue-<n>.md
 
 Always use `--body-file`. Add labels only if the user asks for them or the repo clearly uses a standard one (e.g. `bug`) — check with `gh label list` first.
 
-If the issues belong together and the user wants a parent, follow the sub-issue linking approach used by `/epic` (`gh api -X POST "repos/$REPO/issues/$PARENT/sub_issues" -F sub_issue_id=<id>`). Otherwise leave them standalone and cross-reference them in each body.
+If the issues belong together and the user wants a parent, follow the sub-issue linking approach used by `/factory-epic` (`gh api -X POST "repos/$REPO/issues/$PARENT/sub_issues" -F sub_issue_id=<id>`). Otherwise leave them standalone and cross-reference them in each body.
 
 ### Issue body template
 
