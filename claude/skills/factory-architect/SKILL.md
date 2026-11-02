@@ -1,5 +1,5 @@
 ---
-name: architect
+name: factory-architect
 description: Turn a story's spec into a reviewable architecture artifact — a mermaid component diagram and the public API changes between components — written as a sticky comment on the issue
 effort: high
 disable-model-invocation: true
