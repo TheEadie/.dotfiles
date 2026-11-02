@@ -45,20 +45,15 @@ The default position is always the simplest thing that meets the stated need.
 
 Before probing for detail, identify the simplest version of the story and present it to the user. Then identify any aspects of the request that could be implemented in a more complex or robust way — things like validation, error handling, configuration options, edge case coverage, or extensibility.
 
-Walk through these one at a time, asking the user whether each should be included. For each one, give your recommended answer (usually "leave it out for this story") with a brief reason, so the user can react to a concrete proposal. Ask one question per turn and wait for the answer before moving to the next — do not bundle them into a single list. If a question can be answered by exploring the codebase rather than asking the user, do that instead. Do not assume more is better.
+Put these to the user as one round of questions in the `grilling` format (call the Skill tool with "grilling"), one question per aspect asking whether it should be included. Give each your recommended answer (usually "leave it out for this story") with a brief reason. If a question can be answered by exploring the codebase rather than asking the user, do that instead. Do not assume more is better.
 
 If the user's initial request already contains complexity that isn't strictly necessary to deliver the story, surface that and ask whether it can be simplified or deferred to a later story.
 
 ## Step 4 — Grill the user until the spec is watertight
 
-Interview the user relentlessly about every aspect of this story until you reach a shared understanding. Walk down each branch of the decision tree, resolving dependencies between decisions one-by-one. Follow each branch where it leads — if a happy-path question surfaces an error case or edge case, chase it down then rather than deferring it to a later "round".
+Call the Skill tool with "grilling" and use it to interview the user about every aspect of this story until you reach a shared understanding. If a happy-path answer surfaces an error case or edge case, add it to the next round's frontier.
 
-**How to ask:**
-
-- Ask questions **one at a time** — never bundle multiple questions into a single turn. Wait for the answer before moving on.
-- For each question, **provide your recommended answer** along with the question, so the user can react to a concrete proposal rather than starting from a blank slate. Explain briefly why you recommend it.
-- If a question can be answered by **exploring the codebase**, explore it instead of asking the user. Only ask when the answer genuinely requires the user's intent or knowledge.
-- After each answer, if the spec content is now settled for that point, fold it into the relevant section straight away rather than batching at the end.
+After each round, fold every point the user's answers settled into the relevant spec section straight away rather than batching at the end.
 
 **Areas to make sure you cover.** This is not a script to read through in order — it's a checklist of categories the spec must address before you can exit this step. Use it to notice gaps that the decision-tree walk would otherwise miss.
 
@@ -67,8 +62,6 @@ Interview the user relentlessly about every aspect of this story until you reach
 - **Edge cases and boundaries** — empty / zero states; single vs. many; large data and input-size limits; ordering and timing (sequence, out-of-order events); transitions (navigate away, refresh, cancel mid-flow); repeated actions (double-submit, duplicate event processing); stale data (acting on data that has since changed).
 
 For each item the story touches, confirm the expected behaviour — do not leave it as "TBD". If something genuinely doesn't apply to this story (e.g. there are no concurrency concerns because the story is read-only), note that and move on.
-
-**Scope and deferral sweep.** When you believe you're done, review every answer and ask yourself: are there any remaining ambiguities, implicit assumptions, or "it depends" answers that have not been pinned down? If yes, ask those questions now (one at a time, with a recommended answer). Repeat the sweep until the answer is no.
 
 Do not proceed to Step 5 until you can answer "yes" to all of the following:
 

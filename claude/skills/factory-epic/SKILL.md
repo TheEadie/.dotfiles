@@ -104,14 +104,9 @@ Tell the user the issue has been created/updated, share the URL, and invite them
 
 ## Phase 4 — Deep interrogation
 
-This is the main body of the command. Interview the user relentlessly about every aspect of the epic until you reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one.
+This is the main body of the command. Call the Skill tool with "grilling" and use it to interview the user about every aspect of the epic until you reach a shared understanding.
 
-**How to ask:**
-
-- Ask questions **one at a time** — never bundle multiple questions into a single turn. Wait for the answer before moving on.
-- For each question, **provide your recommended answer** along with the question, so the user can react to a concrete proposal rather than starting from a blank slate. Explain briefly why you recommend it.
-- If a question can be answered by **exploring the codebase**, explore it instead of asking the user. Only ask when the answer genuinely requires the user's intent or knowledge.
-- After each answer, update the relevant section of the parent issue body immediately so the issue tracks the conversation, then move to the next question. Re-render the full body to the temp file and run `gh issue edit <number> --body-file /tmp/epic-body.md` — GitHub's CLI cannot patch a single section.
+After each round, update the relevant sections of the parent issue body so the issue tracks the conversation, then ask the next round. Re-render the full body to the temp file and run `gh issue edit <number> --body-file /tmp/epic-body.md` — GitHub's CLI cannot patch a single section.
 
 Work through the spec section by section, surfacing the high-level shape of the epic. The areas to cover:
 

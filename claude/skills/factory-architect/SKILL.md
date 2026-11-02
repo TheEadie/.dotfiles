@@ -51,14 +51,9 @@ When reasoning about boundaries and which dependencies cross them, use the deep-
 
 ## Step 3 — Grill the user on the component boundaries and public APIs
 
-Interview the user relentlessly about the architecture of this story until you reach a shared understanding. Walk down each branch of the decision tree, resolving dependencies between decisions one-by-one. Follow each branch where it leads — if defining one component's contract surfaces a question about another's, chase it down then rather than deferring it to a later "round".
+Call the Skill tool with "grilling" and use it to interview the user about the architecture of this story until you reach a shared understanding. If defining one component's contract surfaces a question about another's, add it to the next round's frontier.
 
-**How to ask:**
-
-- Ask questions **one at a time** — never bundle multiple questions into a single turn. Wait for the answer before moving on.
-- For each question, **provide your recommended answer** along with the question, so the user can react to a concrete proposal rather than a blank slate. Explain briefly why you recommend it.
-- If a question can be answered by **exploring the codebase**, explore it instead of asking the user. Only ask when the answer genuinely requires the user's intent or knowledge.
-- After each answer, if a decision is now settled, fold it into the relevant section of the artifact straight away rather than batching at the end.
+After each round, fold every decision the user's answers settled into the relevant section of the artifact straight away rather than batching at the end.
 
 **Areas to make sure you cover.** This is not a script to read through in order — it's a checklist of categories the artifact must address before you can exit this step. Use it to notice gaps the decision-tree walk would otherwise miss.
 
@@ -68,8 +63,6 @@ Interview the user relentlessly about the architecture of this story until you r
 - **Contract edge cases** — versioning and backward compatibility of any changed contract; how failures are represented across the boundary; whether each contract is synchronous or asynchronous. Stay at the boundary — do not specify how a component handles these internally.
 
 For each item the story touches, confirm the boundary behaviour — do not leave it as "TBD". If something genuinely doesn't apply (e.g. no new contract is introduced because the change is internal to one component), note that and move on.
-
-**Scope and deferral sweep.** When you believe you're done, review every answer and ask yourself: are there remaining ambiguities, implicit assumptions, or "it depends" answers about the boundaries that have not been pinned down? If yes, ask those questions now (one at a time, with a recommended answer). Repeat the sweep until the answer is no.
 
 Do not proceed to Step 4 until you can answer "yes" to all of the following:
 
